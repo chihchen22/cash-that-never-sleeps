@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clearing Cost Dashboard</title>
+<meta name="description" content="Interactive model: the clearing cost of private protection on an uninsured corporate deposit, single-name and pooled, with the pool's tail under Gaussian and Student-t copulas.">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6e6d68;
+  --axis-text: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11,11,11,0.10);
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --banner-bg: #fff6e0;
+  --banner-ink: #5a4100;
+  --banner-edge: #eda100;
+  --good-ink: #006300;
+  --bad-ink: #a12a2a;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --focus: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #a3a29b; --axis-text: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-ink: #86b6ef;
+    --banner-bg: #2a2310; --banner-ink: #f3d68a; --banner-edge: #c98500;
+    --good-ink: #0ca30c; --bad-ink: #e66767;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --focus: #86b6ef;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #a3a29b; --axis-text: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --accent: #3987e5; --accent-ink: #86b6ef;
+  --banner-bg: #2a2310; --banner-ink: #f3d68a; --banner-edge: #c98500;
+  --good-ink: #0ca30c; --bad-ink: #e66767;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --focus: #86b6ef;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--accent-ink); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; }
+header h1 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 4px; font-weight: 650; letter-spacing: -0.01em; }
+header p.sub { margin: 0 0 14px; color: var(--ink-2); max-width: 70ch; }
+.banner {
+  background: var(--banner-bg); color: var(--banner-ink); border-left: 4px solid var(--banner-edge);
+  padding: 10px 14px; border-radius: 6px; margin: 0 0 16px; font-size: 0.93rem;
+}
+.banner strong { font-weight: 650; }
+.kpis {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 16px;
+}
+.kpi { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.kpi .lab { font-size: 0.8rem; color: var(--ink-2); line-height: 1.3; }
+.kpi .val { font-size: 1.6rem; font-weight: 650; line-height: 1.2; margin-top: 2px; }
+.kpi .val small { font-size: 0.8rem; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
+.kpi .note { font-size: 0.78rem; color: var(--muted); }
+.layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+aside.inputs {
+  background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 12px 14px 14px;
+  position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto;
+}
+.btnrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+button {
+  font: inherit; font-size: 0.85rem; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--ring); border-radius: 6px; padding: 5px 10px; cursor: pointer; min-height: 32px;
+}
+button:hover { border-color: var(--axis); }
+button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+fieldset { border: 0; border-top: 1px solid var(--grid); margin: 10px 0 0; padding: 8px 0 0; min-width: 0; }
+legend { font-weight: 650; font-size: 0.85rem; color: var(--ink-2); padding: 0 6px 0 0; text-transform: uppercase; letter-spacing: 0.04em; }
+.ctl { margin: 8px 0 2px; }
+.ctl .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ctl label.name { font-size: 0.86rem; line-height: 1.25; }
+.ctl label.name .hint { display: block; font-size: 0.74rem; color: var(--muted); }
+.ctl .num { display: flex; align-items: center; gap: 4px; flex: none; }
+.ctl input[type=number] {
+  width: 76px; font: inherit; font-size: 0.86rem; padding: 3px 5px; text-align: right;
+  background: var(--page); color: var(--ink); border: 1px solid var(--axis); border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.ctl .unit { font-size: 0.78rem; color: var(--muted); width: 34px; }
+.ctl input[type=range] { width: 100%; margin: 4px 0 0; accent-color: var(--accent); height: 22px; }
+.radios { display: flex; gap: 14px; margin: 8px 0 2px; font-size: 0.88rem; flex-wrap: wrap; }
+.radios label, .check label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.check { margin: 10px 0 2px; font-size: 0.86rem; }
+.check .hint { display: block; font-size: 0.74rem; color: var(--muted); margin-left: 24px; }
+.dim { opacity: 0.45; }
+main.outputs { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 14px 16px 16px; min-width: 0; }
+.card h2 { font-size: 1.05rem; margin: 0 0 2px; font-weight: 650; }
+.card p.sub { margin: 0 0 10px; color: var(--ink-2); font-size: 0.88rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.83rem; color: var(--ink-2); margin: 2px 0 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.lk { width: 16px; height: 0; border-top: 2px solid; display: inline-block; flex: none; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart svg text { font-family: inherit; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--ring); box-shadow: 0 4px 14px rgba(0,0,0,0.14); border-radius: 8px;
+  padding: 7px 9px; font-size: 0.8rem; line-height: 1.35; white-space: nowrap; z-index: 5; display: none;
+}
+.tip .t-h { color: var(--ink-2); margin-bottom: 3px; }
+.tip .t-r { display: flex; align-items: center; gap: 6px; }
+.tip .t-r b { font-weight: 650; }
+table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; }
+thead th { color: var(--ink-2); font-weight: 600; font-size: 0.8rem; vertical-align: bottom; }
+tbody tr.sum td { font-weight: 650; border-top: 1px solid var(--axis); }
+tbody tr.subrow td { color: var(--ink-2); font-size: 0.8rem; }
+tbody tr.subrow td:first-child { padding-left: 20px; }
+td.sel, th.sel { background: var(--surface-2); }
+.tablewrap { overflow-x: auto; margin-top: 8px; }
+.verdict { margin: 10px 0 0; padding: 8px 10px; border-radius: 6px; background: var(--surface-2); font-size: 0.9rem; }
+.verdict .ic { font-weight: 700; margin-right: 6px; }
+.ok { color: var(--good-ink); }
+.no { color: var(--bad-ink); }
+.split2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.be { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+.be .lab { font-size: 0.82rem; color: var(--ink-2); }
+.be .val { font-size: 1.35rem; font-weight: 650; }
+.be .note { font-size: 0.78rem; color: var(--muted); }
+details { margin-top: 10px; }
+details > summary { cursor: pointer; color: var(--accent-ink); font-size: 0.88rem; }
+details.method > summary { font-size: 1.05rem; font-weight: 650; color: var(--ink); }
+.method .eq {
+  font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", Georgia, serif; font-size: 1.02rem;
+  background: var(--surface-2); padding: 8px 10px; border-radius: 6px; overflow-x: auto; margin: 6px 0 10px; white-space: nowrap;
+}
+.method h3 { font-size: 0.95rem; margin: 16px 0 4px; }
+.method p, .method li { font-size: 0.9rem; color: var(--ink-2); max-width: 80ch; }
+.method i { font-family: "Cambria Math", Georgia, serif; }
+footer { margin-top: 18px; font-size: 0.8rem; color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  aside.inputs { position: static; max-height: none; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); position: sticky; top: 0; z-index: 6;
+          background: var(--page); padding: 6px 0; margin-left: 0; margin-right: 0; }
+  .kpis { gap: 6px; }
+  .kpi { padding: 5px 8px; border-radius: 8px; }
+  .kpi .lab { font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .val { font-size: 1.1rem; margin-top: 0; }
+  .kpi .note { display: none; }
+}
+@media (max-width: 560px) {
+  .split2 { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.3rem; }
+  th, td { padding: 4px 5px; }
+  table { font-size: 0.8rem; }
+}
+@media (forced-colors: active) {
+  .sw, .lk { forced-color-adjust: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p style="font-size:0.85rem;margin:0 0 6px">Run clock dashboard (Chapter 3) · <a href="settlement.html">Settlement clock dashboard (Chapter 6)</a></p>
+  <h1>The clearing cost of an uninsured deposit: interactive model (Cash That Never Sleeps, Chapter 3)</h1>
+  <p class="sub">Price one year of private protection on a large uninsured corporate deposit, single-name or through a pooled vehicle, and see how often the pool would fail to pay par. Change any input and the results recompute.</p>
+  <div class="banner" role="note"><strong>Illustrative parameters, not estimates for any bank.</strong> Every input is an assumption chosen to be plausible; experiment with them, especially the tail. See the <a href="https://github.com/chihchen22/cash-that-never-sleeps">manual and PROCESS.md</a> for definitions, sources and how the numbers were produced and checked.</div>
+</header>
+
+<section class="kpis" aria-label="Headline results" aria-live="polite">
+  <div class="kpi"><div class="lab">Single-name funded vehicle</div><div class="val" id="kpi-single">–</div><div class="note">clearing cost c*, bps a year</div></div>
+  <div class="kpi"><div class="lab" id="kpi-pool-lab">Pooled vehicle</div><div class="val" id="kpi-pool">–</div><div class="note">clearing cost c*, bps a year</div></div>
+  <div class="kpi"><div class="lab">Pool cannot pay par, per year</div><div class="val" id="kpi-fail">–</div><div class="note" id="kpi-fail-note">real-world probability</div></div>
+  <div class="kpi"><div class="lab">Shortfall given own bank fails</div><div class="val" id="kpi-cond">–</div><div class="note" id="kpi-cond-note">chosen copula</div></div>
+</section>
+
+<div class="layout">
+<aside class="inputs" aria-label="Model inputs">
+  <div class="btnrow">
+    <button type="button" class="primary" id="reset">Reset to base case</button>
+    <button type="button" id="preset-ref" title="Funded buffer 20%, no facility">Reference 20/0</button>
+    <button type="button" id="preset-hyb" title="Funded buffer 10%, facility 10% at a 20 bps fee">Hybrid 10/10</button>
+  </div>
+  <div id="controls"></div>
+</aside>
+
+<main class="outputs">
+  <section class="card" aria-labelledby="h-dec">
+    <h2 id="h-dec">1. Clearing cost decomposition</h2>
+    <p class="sub">Basis points a year on the covered balance. Credit and access are the risk the depositor bears unprotected; capacity and frictions are the cost of transferring it.</p>
+    <div class="legend" id="dec-legend"></div>
+    <div class="chart" id="dec-chart"></div>
+    <div class="tablewrap"><table id="dec-table" aria-label="Clearing cost decomposition table"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-rel">
+    <h2 id="h-rel">2. When the pool fails</h2>
+    <p class="sub" id="rel-sub">Real-world probabilities. Simultaneous timing standard: all of a year's failures land inside one advance-dividend window, so the cash needed at the trigger is the number of failures times each bank's share.</p>
+    <div class="tablewrap"><table id="rel-table" aria-label="Pool failure probabilities, Gaussian against Student-t"></table></div>
+    <p class="sub" style="margin-top:8px">Expected loss uses the LGD set in the inputs. Section 38 of the workpaper's results file uses the state-dependent LGD (switch it on to compare); the shortfall and severity do not depend on LGD.</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-curve">
+    <h2 id="h-curve">3. Shortfall given the depositor's own bank fails, by capacity</h2>
+    <p class="sub">Probability that the pool cannot pay par in a year in which the depositor's own bank fails, against capacity θ + F (logarithmic scale). The vertical line marks the current design.</p>
+    <div class="legend" id="curve-legend"></div>
+    <div class="chart" id="curve-chart"></div>
+    <details><summary>Table view</summary><div class="tablewrap"><table id="curve-table" aria-label="Conditional shortfall by capacity"></table></div></details>
+  </section>
+
+  <section class="card" aria-labelledby="h-rule">
+    <h2 id="h-rule">4. Buffer versus facility</h2>
+    <p class="sub">At fixed capacity, replacing one unit of funded buffer with one unit of committed facility changes the price by the facility fee plus its expected drawn cost per unit, minus the buffer's lock-up premium.</p>
+    <div id="rule-text"></div>
+    <div class="tablewrap"><table id="rule-table" aria-label="Price by buffer and facility split at the current capacity"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-be">
+    <h2 id="h-be">5. Break-even yield advantage</h2>
+    <p class="sub">The bank default probability λ<sub>P</sub> at which the clearing cost equals the yield advantage Δ the depositor earns by holding the balance at the bank (set Δ in the inputs). Below it, protection costs less than the yield advantage.</p>
+    <div class="split2" id="be-out"></div>
+  </section>
+
+  <section class="card">
+    <details class="method" id="method">
+      <summary>Method: the formulas used, in the notation of Chapter 3</summary>
+      <h3>Single-name clearing cost (four terms)</h3>
+      <div class="eq"><i>c</i>* = <i>λ<sub>Q</sub></i> LGD<sub>dep</sub> + <i>λ<sub>Q</sub></i> max(0, 1 − <i>a</i> − LGD<sub>dep</sub>) (<i>r</i> + <i>s<sub>b</sub></i>) <i>D</i> + <i>k</i> + <i>f</i>,&nbsp;&nbsp; <i>λ<sub>Q</sub></i> = <i>μ λ<sub>P</sub></i></div>
+      <p>Credit, access, standing capacity, frictions. Credit plus access is the risk (what the depositor bears unprotected); <i>k</i> + <i>f</i> is the transfer cost. The single-name vehicle is fully funded, so it never falls short.</p>
+      <h3>Pooled vehicle price</h3>
+      <div class="eq"><i>c</i>*<sub>pool</sub> = credit<sub>Q</sub> + access<sub>Q</sub> + <i>θ s</i><sub>lock</sub> + <i>F</i> fee<sub>F</sub> + expected drawn cost + <i>f</i></div>
+      <p><i>N</i> reference banks, each <i>w</i> = 1/<i>N</i> of covered notional; <i>n</i> failures in the year. Expectations are on the pricing measure: the copula is run with the per-bank probability <i>μ λ<sub>P</sub></i> (capped at 0.999), same <i>ρ</i>, same LGD mapping. credit<sub>Q</sub> = E<sub>Q</sub>[<i>n w</i> LGD]; access<sub>Q</sub> = E<sub>Q</sub>[<i>n w</i> max(0, 1 − <i>a</i> − LGD)] (<i>r</i> + <i>s<sub>b</sub></i>) <i>D</i>. With a fixed LGD these equal the single-name credit and access terms exactly.</p>
+      <div class="eq">drawn = E<sub>Q</sub>[min(max(<i>n w</i> − <i>θ</i>, 0), <i>F</i>)] (<i>r</i> + <i>s</i><sub>draw</sub>) lag/365 + E<sub>Q</sub>[min(max(<i>n w</i> (1 − <i>a</i>) − <i>θ</i>, 0), <i>F</i>)] max(0, <i>s</i><sub>draw</sub> − <i>s<sub>b</sub></i>) <i>D</i></div>
+      <p>The first part is the facility drawn from the trigger until the advance dividend; the second is what is still drawn after it and terms out for up to <i>D</i> years.</p>
+      <h3>Copulas and the failure count</h3>
+      <div class="eq">Gaussian: <i>p</i>(<i>z</i>) = Φ( (Φ<sup>−1</sup>(<i>λ</i>) − √<i>ρ</i> <i>z</i>) / √(1 − <i>ρ</i>) ),&nbsp;&nbsp; <i>z</i> ~ N(0, 1)</div>
+      <div class="eq">Student-t(<i>ν</i>): <i>p</i>(<i>z</i>, <i>W</i>) = Φ( (<i>c</i> √(<i>W</i>/<i>ν</i>) − √<i>ρ</i> <i>z</i>) / √(1 − <i>ρ</i>) ),&nbsp;&nbsp; <i>W</i> ~ χ²<sub><i>ν</i></sub>,&nbsp; E<sub><i>W</i></sub>[Φ(<i>c</i> √(<i>W</i>/<i>ν</i>))] = <i>λ</i></div>
+      <div class="eq"><i>n</i> | common factor ~ Binomial(<i>N</i>, <i>p</i>)</div>
+      <p>Every probability is computed by exact quadrature over the common factor, on grids coarser than the workpaper's, for speed: 2,001 equally spaced points on [−8, 8] for the Gaussian copula (workpaper 4,001), and a 161 × 120 grid in (<i>z</i>, <i>W</i>) for the Student-t (workpaper 401 × 240), with <i>W</i> on a log grid from 10<sup>−4</sup> to 80. On the tested parameter sets the results agree with the workpaper to better than 0.01 percent relative. Binomial terms smaller than 10<sup>−16</sup> of the largest term in their row are dropped.</p>
+      <h3>When the pool fails</h3>
+      <div class="eq">P(cannot pay par) = P(<i>n w</i> &gt; <i>θ</i> + <i>F</i>)&nbsp;&nbsp; on the real-world measure (<i>λ</i> = <i>λ<sub>P</sub></i>)</div>
+      <p>Given that a named bank (the depositor's own) fails, each state is weighted by <i>p</i> times the Binomial(<i>N</i> − 1, <i>p</i>) distribution of the other banks' failures, and <i>n</i> = 1 + the others. Shortfall is P(<i>n w</i> &gt; <i>θ</i> + <i>F</i> | own bank fails). A shortfall is shared pro rata across the failed names, so the unpaid share is max(0, 1 − (<i>θ</i> + <i>F</i>)/(<i>n w</i>)); severity is its expectation given a shortfall, and expected loss is E[unpaid share × LGD | own bank fails], since an unpaid depositor keeps its deposit claim and bears LGD on it.</p>
+      <h3>Buffer versus facility</h3>
+      <div class="eq">Δ<i>c</i>* per unit of buffer swapped for facility = fee<sub>F</sub> + (expected drawn cost)/<i>F</i> − <i>s</i><sub>lock</sub>&nbsp;&nbsp; (capacity <i>θ</i> + <i>F</i> fixed)</div>
+      <p>The facility carries no receivership credit exposure at full use of the capacity when <i>θ</i> ≥ (1 − <i>a</i>)(<i>θ</i> + <i>F</i>): the advance dividends then repay it within the week.</p>
+      <h3>Break-even</h3>
+      <p>The <i>λ<sub>P</sub></i> at which <i>c</i>*(<i>λ<sub>P</sub></i>) = Δ, searched on 0 to 20 percent. "None" means the price exceeds Δ at any default probability (the transfer cost alone is above Δ).</p>
+      <h3>State-dependent LGD (optional)</h3>
+      <div class="eq">LGD(<i>z</i>) = 15% + 25% × min(1, max(0, <i>z</i> / −3)),&nbsp;&nbsp; <i>a</i>(<i>z</i>) = (2/3)(1 − LGD(<i>z</i>))</div>
+      <p>LGD rises from 15 percent in a normal year to 40 percent when the common factor is three standard deviations below its mean, and the advance dividend falls with it. Under the Student-t copula the mapping reads the Gaussian factor <i>z</i>. When it is on, the LGD and advance-dividend inputs apply to the single-name vehicle only.</p>
+      <h3>What this page does not do</h3>
+      <ul>
+        <li>Only the simultaneous timing standard is computed; the workpaper's sequential alternative is not.</li>
+        <li>The facility is assumed to perform: no provider default on the common factor and no material-adverse-change clause. Both make the hybrid fail more often than shown.</li>
+        <li>One correlation is used for prices and probabilities. The workpaper prices at <i>ρ</i> = 0.20 and states failure statistics at 0.30; with a fixed LGD the price does not depend on <i>ρ</i> except through the facility's drawn cost, a few thousandths of a basis point at base.</li>
+        <li>No Year-2, replenishment, tranche or bank-seller calculations; those are in the workpaper.</li>
+      </ul>
+      <p>The JavaScript on this page is tested against the Python workpaper on the base case and twelve varied parameter sets (prices within 0.05 basis points, probabilities within 2 percent relative).</p>
+    </details>
+  </section>
+</main>
+</div>
+<footer><span id="perf"></span> All computation runs in your browser; nothing is sent anywhere. Chih Chen, Cash That Never Sleeps, 2026. The views expressed are my own and do not represent those of any employer or organization with which I am affiliated. Not legal, investment or regulatory advice; the protection described is not deposit insurance. Code MIT; text CC BY 4.0. <a href="https://github.com/chihchen22/cash-that-never-sleeps">Repository</a>.</footer>
+</div>
+
+<script id="model">
+/* Model core: plain functions, no DOM. Evaluated by tests/parity.mjs in node. */
+var UDModel = (function () {
+  "use strict";
+  var SQRTPI = Math.sqrt(Math.PI), SQRT2 = Math.SQRT2, EPS = 1e-9;
+  var LGD_GOOD = 0.15, LGD_BAD = 0.40, Z_BAD = -3.0, ADV_SHARE = 2.0 / 3.0;
+  var PD_Q_CAP = 0.999, BE_LO = 1e-6, BE_HI = 0.20, TRUNC = 1e-16;
+
+  // Complementary error function: positive-term series below 3, continued fraction above.
+  function erfc(x) {
+    if (x !== x) return NaN;
+    if (x < 0) return 2 - erfc(-x);
+    if (x === 0) return 1;
+    if (x < 3) {
+      var x2 = x * x, term = x, sum = x;
+      for (var n = 1; n < 300; n++) {
+        term *= 2 * x2 / (2 * n + 1);
+        sum += term;
+        if (term < 1e-17 * sum) break;
+      }
+      return 1 - 2 / SQRTPI * Math.exp(-x2) * sum;
+    }
+    if (x > 27.3) return 0;
+    var nt = x < 6 ? 80 : 40, t = x;
+    for (var k = nt; k >= 1; k--) t = x + (k / 2) / t;
+    return Math.exp(-x * x) / SQRTPI / t;
+  }
+  function ncdf(x) { return 0.5 * erfc(-x / SQRT2); }
+
+  // Inverse normal CDF: rational start (Acklam), then two Halley refinements on ncdf.
+  function invNcdf(p) {
+    if (p <= 0) return -Infinity;
+    if (p >= 1) return Infinity;
+    var a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+    var b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+    var c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+    var d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+    var q, r, x, pl = 0.02425;
+    if (p < pl) {
+      q = Math.sqrt(-2 * Math.log(p));
+      x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    } else if (p <= 1 - pl) {
+      q = p - 0.5; r = q * q;
+      x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+    } else {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    for (var i = 0; i < 2; i++) {
+      var e = ncdf(x) - p, u = e * Math.sqrt(2 * Math.PI) * Math.exp(x * x / 2);
+      x = x - u / (1 + x * u / 2);
+    }
+    return x;
+  }
+
+  function linspace(a, b, n) {
+    var out = new Float64Array(n), step = (b - a) / (n - 1);
+    for (var i = 0; i < n; i++) out[i] = a + i * step;
+    out[n - 1] = b;
+    return out;
+  }
+  function gaussWeights(z) {
+    var w = new Float64Array(z.length), s = 0, i;
+    for (i = 0; i < z.length; i++) { w[i] = Math.exp(-z[i] * z[i] / 2); s += w[i]; }
+    for (i = 0; i < z.length; i++) w[i] /= s;
+    return w;
+  }
+
+  // Coarser than the workpaper (4,001 and 401 x 240) for speed; tests/parity.mjs checks the agreement.
+  var GRID = { gaussZ: 2001, tZ: 161, tW: 120 };
+  var _gauss = null, _tgrid = {};
+  function gaussGrid() {
+    if (!_gauss) { var z = linspace(-8, 8, GRID.gaussZ); _gauss = { z: z, w: gaussWeights(z) }; }
+    return _gauss;
+  }
+  function tGrid(nu) {
+    var key = nu + ":" + GRID.tZ + ":" + GRID.tW;
+    if (_tgrid[key]) return _tgrid[key];
+    var s = linspace(Math.log(1e-4), Math.log(80.0), GRID.tW), W = new Float64Array(GRID.tW), ww = new Float64Array(GRID.tW), tot = 0, i;
+    for (i = 0; i < GRID.tW; i++) { W[i] = Math.exp(s[i]); ww[i] = Math.pow(W[i], nu / 2) * Math.exp(-W[i] / 2); tot += ww[i]; }
+    for (i = 0; i < GRID.tW; i++) ww[i] /= tot;
+    var z = linspace(-8, 8, GRID.tZ);
+    _tgrid[key] = { z: z, wz: gaussWeights(z), W: W, ww: ww, sq: W.map(function (v) { return Math.sqrt(v / nu); }) };
+    return _tgrid[key];
+  }
+
+  function lgdOfZ(z) { return LGD_GOOD + (LGD_BAD - LGD_GOOD) * Math.min(1, Math.max(0, z / Z_BAD)); }
+
+  // Quadrature nodes: weight, conditional default probability, LGD and advance dividend in that state.
+  function makeNodes(pd, rho, copula, nu, lgdMode, lgd, a) {
+    var sr = Math.sqrt(rho), s1 = Math.sqrt(1 - rho), i, j, m;
+    var corr = lgdMode === "corr", w, p, L, A, zz;
+    if (copula === "gauss") {
+      var G = gaussGrid(), thr = invNcdf(pd);
+      m = G.z.length; w = G.w; p = new Float64Array(m); zz = G.z;
+      for (i = 0; i < m; i++) p[i] = ncdf((thr - sr * G.z[i]) / s1);
+    } else {
+      var T = tGrid(nu), lo = -40.0, hi = 0.0, c;
+      for (var it = 0; it < 80; it++) {
+        c = (lo + hi) / 2;
+        var e = 0;
+        for (j = 0; j < T.W.length; j++) e += T.ww[j] * ncdf(c * T.sq[j]);
+        if (e < pd) lo = c; else hi = c;
+      }
+      c = (lo + hi) / 2;
+      var nz = T.z.length, nw = T.W.length;
+      m = nz * nw; w = new Float64Array(m); p = new Float64Array(m); zz = new Float64Array(m);
+      for (i = 0; i < nz; i++) {
+        var base = i * nw, srz = sr * T.z[i];
+        for (j = 0; j < nw; j++) {
+          w[base + j] = T.wz[i] * T.ww[j];
+          p[base + j] = ncdf((c * T.sq[j] - srz) / s1);
+          zz[base + j] = T.z[i];
+        }
+      }
+    }
+    L = new Float64Array(m); A = new Float64Array(m);
+    for (i = 0; i < m; i++) {
+      L[i] = corr ? lgdOfZ(zz[i]) : lgd;
+      A[i] = corr ? ADV_SHARE * (1 - L[i]) : a;
+    }
+    return { m: m, w: w, p: p, lgd: L, adv: A };
+  }
+
+  var _nodeCache = [];
+  function nodesFor(pd, par, copula, useCache) {
+    var key = [pd, par.rho, copula, par.nu, par.lgdMode, par.lgd, par.a, GRID.gaussZ, GRID.tZ, GRID.tW].join("|");
+    for (var i = 0; i < _nodeCache.length; i++) if (_nodeCache[i].key === key) return _nodeCache[i].nodes;
+    var nodes = makeNodes(pd, par.rho, copula, par.nu, par.lgdMode, par.lgd, par.a);
+    if (useCache !== false) { _nodeCache.unshift({ key: key, nodes: nodes }); if (_nodeCache.length > 6) _nodeCache.pop(); }
+    return nodes;
+  }
+
+  // Binomial(n, p) pmf into out[lo..hi]; terms below TRUNC of the row maximum are dropped.
+  function binomRow(p, n, out) {
+    if (p <= 0) { out[0] = 1; return [0, 0]; }
+    if (p >= 1) { out[n] = 1; return [n, n]; }
+    var k, v, mx, mean = n * p, r;
+    if (p <= 0.5) {
+      r = p / (1 - p); v = Math.pow(1 - p, n); out[0] = v; mx = v;
+      for (k = 0; k < n; k++) {
+        v = v * (n - k) / (k + 1) * r; out[k + 1] = v;
+        if (v > mx) mx = v;
+        if (k + 1 > mean && v < TRUNC * mx) return [0, k + 1];
+      }
+      return [0, n];
+    }
+    r = (1 - p) / p; v = Math.pow(p, n); out[n] = v; mx = v;
+    for (k = n; k > 0; k--) {
+      v = v * k / (n - k + 1) * r; out[k - 1] = v;
+      if (v > mx) mx = v;
+      if (k - 1 < mean && v < TRUNC * mx) return [k - 1, n];
+    }
+    return [0, n];
+  }
+
+  function singleName(par) {
+    var lq = par.mu * par.pd, credit = lq * par.lgd;
+    var access = lq * Math.max(0, 1 - par.a - par.lgd) * (par.r + par.s_b) * par.D;
+    return { credit: credit, access: access, capacity: par.k, frictions: par.f, c_star: credit + access + par.k + par.f,
+             risk: credit + access, transfer: par.k + par.f };
+  }
+
+  // Pool price on pricing-measure nodes for a given buffer theta and facility F.
+  function priceOnNodes(nd, par, theta, F) {
+    var N = par.N, W = 1 / N, credit = 0, access = 0, draw0 = 0, termout = 0, i, k;
+    var q = F > 0 ? new Float64Array(N + 1) : null;
+    for (i = 0; i < nd.m; i++) {
+      var w = nd.w[i], p = nd.p[i], L = nd.lgd[i], A = nd.adv[i];
+      credit += w * p * L;
+      access += w * p * Math.max(0, 1 - A - L);
+      if (F > 0 && p > 0) {
+        var rg = binomRow(p, N, q), d0 = 0, d1 = 0;
+        for (k = rg[0]; k <= rg[1]; k++) {
+          var cash = k * W;
+          if (cash > theta) d0 += q[k] * Math.min(cash - theta, F);
+          var tn = cash * (1 - A) - theta;
+          if (tn > 0) d1 += q[k] * Math.min(tn, F);
+        }
+        draw0 += w * d0; termout += w * d1;
+      }
+    }
+    access *= (par.r + par.s_b) * par.D;
+    var drawn = draw0 * (par.r + par.s_draw) * par.lag / 365 + termout * Math.max(0, par.s_draw - par.s_b) * par.D;
+    var lock = theta * par.s_lock, commit = F * par.fee, kk = lock + commit + drawn;
+    return { credit: credit, access: access, lock: lock, commit: commit, drawn: drawn, k: kk, f: par.f,
+             c_star: credit + access + kk + par.f, draw0: draw0, termout: termout, theta: theta, F: F };
+  }
+
+  function poolPrice(par, theta, F, pd, useCache) {
+    var lp = pd === undefined ? par.pd : pd;
+    var nd = nodesFor(Math.min(par.mu * lp, PD_Q_CAP), par, par.copula, useCache);
+    return priceOnNodes(nd, par, theta === undefined ? par.theta : theta, F === undefined ? par.F : F);
+  }
+
+  // Real-world failure-count distributions: unconditional, and conditional on a named bank failing.
+  function reliabilityDist(par, copula) {
+    var nd = nodesFor(par.pd, par, copula), N = par.N, i, k;
+    var U = new Float64Array(N + 1), C = new Float64Array(N + 1), CL = new Float64Array(N + 1), q = new Float64Array(N), Z = 0;
+    for (i = 0; i < nd.m; i++) {
+      var w = nd.w[i], p = nd.p[i], L = nd.lgd[i];
+      var rg = binomRow(p, N - 1, q), wp = w * p, w1 = w * (1 - p);
+      Z += wp;
+      for (k = rg[0]; k <= rg[1]; k++) {
+        var qk = q[k];
+        U[k] += w1 * qk; U[k + 1] += wp * qk;
+        C[k + 1] += wp * qk; CL[k + 1] += wp * qk * L;
+      }
+    }
+    return { N: N, U: U, C: C, CL: CL, Z: Z, copula: copula };
+  }
+
+  function relAt(dist, cap) {
+    var N = dist.N, W = 1 / N, uncond = 0, cond = 0, unpaid = 0, loss = 0;
+    for (var k = 0; k <= N; k++) {
+      var cash = k * W;
+      if (cash > cap + EPS) { uncond += dist.U[k]; cond += dist.C[k]; }
+      if (k >= 1) {
+        var share = Math.max(0, 1 - cap / cash);
+        unpaid += dist.C[k] * share; loss += dist.CL[k] * share;
+      }
+    }
+    cond /= dist.Z; unpaid /= dist.Z; loss /= dist.Z;
+    return { uncond: uncond, cond: cond, unpaid: unpaid, severity: cond > 0 ? unpaid / cond : 0, loss: loss };
+  }
+
+  // Conditional shortfall at capacity k/N for k = 0..N (a step function of capacity).
+  function curve(dist) {
+    var out = [], N = dist.N, tail = 0;
+    for (var k = N; k >= 0; k--) { out[k] = tail / dist.Z; tail += dist.C[k]; }
+    return out;
+  }
+
+  function breakevenSingle(par, delta) {
+    var c0 = par.k + par.f;
+    if (c0 >= delta) return { none: true };
+    var slope = par.mu * (par.lgd + Math.max(0, 1 - par.a - par.lgd) * (par.r + par.s_b) * par.D);
+    var x = slope > 0 ? (delta - c0) / slope : Infinity;
+    return x > BE_HI ? { above: true } : { pd: x };
+  }
+
+  // Root of c*_pool(lambda_P) = delta on [1e-6, 0.20] by the Illinois method (bisection-equivalent root).
+  function breakevenPool(par, delta) {
+    var g = function (x) { return poolPrice(par, par.theta, par.F, x, false).c_star - delta; };
+    var lo = BE_LO, hi = BE_HI, flo = g(lo), evals = 1;
+    if (flo >= 0) return { none: true, evals: evals };
+    var fhi = g(hi); evals++;
+    if (fhi < 0) return { above: true, evals: evals };
+    var side = 0, x = lo;
+    for (var it = 0; it < 60; it++) {
+      x = (lo * fhi - hi * flo) / (fhi - flo);
+      var fx = g(x); evals++;
+      if (Math.abs(fx) < 1e-15 || hi - lo < 1e-14) break;
+      if (fx < 0) { lo = x; flo = fx; if (side === -1) fhi /= 2; side = -1; }
+      else { hi = x; fhi = fx; if (side === 1) flo /= 2; side = 1; }
+    }
+    return { pd: x, evals: evals };
+  }
+
+  var SPLIT_SHARES = [0.25, 0.50, 0.75];
+  function rule(par) {
+    var cap = par.theta + par.F, nd = nodesFor(Math.min(par.mu * par.pd, PD_Q_CAP), par, par.copula);
+    var allF = priceOnNodes(nd, par, cap, 0).c_star;
+    var splits = SPLIT_SHARES.map(function (s) {
+      var th = cap * (1 - s), F = cap * s, pr = priceOnNodes(nd, par, th, F);
+      return { share: s, theta: th, F: F, c_star: pr.c_star, drawn: pr.drawn,
+               marginal: F > 0 ? (pr.c_star - allF) / F : 0, drawnPerUnit: F > 0 ? pr.drawn / F : 0 };
+    });
+    return { cap: cap, allFunded: allF, splits: splits };
+  }
+
+  function compute(par) {
+    var cap = par.theta + par.F;
+    var out = { par: par, cap: cap, single: singleName(par), pool: poolPrice(par) };
+    out.rule = rule(par);
+    out.dist = { gauss: reliabilityDist(par, "gauss"), t: reliabilityDist(par, "t") };
+    out.rel = { gauss: relAt(out.dist.gauss, cap), t: relAt(out.dist.t, cap) };
+    out.curve = { gauss: curve(out.dist.gauss), t: curve(out.dist.t) };
+    out.be = { single: breakevenSingle(par, par.delta), pool: breakevenPool(par, par.delta) };
+    return out;
+  }
+
+  var BP = 1e-4;
+  var BASE = { pd: 0.0025, mu: 3.0, lgd: 0.25, a: 0.50, D: 2.0, r: 0.043, s_b: 0.010, f: 15 * BP, k: 10 * BP,
+               N: 50, rho: 0.30, copula: "gauss", nu: 5, theta: 0.20, F: 0.0, fee: 20 * BP, s_lock: 10 * BP,
+               s_draw: 200 * BP, lag: 7, lgdMode: "fixed", delta: 50 * BP };
+
+  function clearCache() { _nodeCache.length = 0; }
+
+  return { BASE: BASE, GRID: GRID, clearCache: clearCache, erfc: erfc, ncdf: ncdf, invNcdf: invNcdf, compute: compute, singleName: singleName,
+           poolPrice: poolPrice, reliabilityDist: reliabilityDist, relAt: relAt, curve: curve, rule: rule,
+           breakevenSingle: breakevenSingle, breakevenPool: breakevenPool };
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var M = UDModel, BP = 1e-4;
+  var NS = "http://www.w3.org/2000/svg";
+
+  // ---------- inputs ----------
+  // scale: displayed value x scale = model value
+  var SPEC = [
+    { group: "Bank and deposit claim" },
+    { id: "pd", name: "Default probability λ<sub>P</sub>", hint: "real-world, one year, per bank", unit: "%", scale: 0.01, min: 0.01, max: 5, step: 0.01 },
+    { id: "mu", name: "Risk-premium multiplier μ", hint: "λ<sub>Q</sub> = μ λ<sub>P</sub>", unit: "×", scale: 1, min: 1, max: 6, step: 0.1 },
+    { id: "lgd", name: "Deposit LGD", hint: "loss given default on the deposit claim", unit: "%", scale: 0.01, min: 0, max: 80, step: 1 },
+    { id: "a", name: "Advance dividend a", hint: "share of the claim paid within days", unit: "%", scale: 0.01, min: 0, max: 90, step: 1 },
+    { id: "D", name: "Years to final dividends D", unit: "yrs", scale: 1, min: 0, max: 5, step: 0.25 },
+    { group: "Rates and transfer costs" },
+    { id: "r", name: "Risk-free rate r", hint: "3-month bill, 15 Oct 2026; update", unit: "%", scale: 0.01, min: 0, max: 10, step: 0.05 },
+    { id: "s_b", name: "Provider funding spread s<sub>b</sub>", unit: "bps", scale: BP, min: 0, max: 500, step: 5 },
+    { id: "f", name: "Frictions f", hint: "operations, legal, structuring, margin", unit: "bps", scale: BP, min: 0, max: 50, step: 0.5 },
+    { id: "k", name: "Single-name capacity cost k", hint: "lock-up premium on 100% collateral", unit: "bps", scale: BP, min: 0, max: 50, step: 0.5 },
+    { group: "Pooled vehicle" },
+    { id: "N", name: "Number of banks N", hint: "each 1/N of covered notional", unit: "", scale: 1, min: 5, max: 100, step: 1, int: true },
+    { id: "rho", name: "Asset correlation ρ", unit: "", scale: 1, min: 0, max: 0.9, step: 0.01 },
+    { radio: "copula" },
+    { id: "nu", name: "Student-t degrees of freedom ν", unit: "", scale: 1, min: 3, max: 30, step: 1, int: true },
+    { id: "theta", name: "Funded buffer θ", hint: "T-bills, % of covered notional", unit: "%", scale: 0.01, min: 0, max: 100, step: 1 },
+    { id: "F", name: "Committed facility F", hint: "% of covered notional", unit: "%", scale: 0.01, min: 0, max: 100, step: 1 },
+    { id: "fee", name: "Facility fee", hint: "commitment fee on the undrawn F", unit: "bps", scale: BP, min: 0, max: 150, step: 1 },
+    { id: "s_lock", name: "Buffer lock-up premium s<sub>lock</sub>", unit: "bps", scale: BP, min: 0, max: 60, step: 1 },
+    { id: "s_draw", name: "Drawn margin s<sub>draw</sub>", hint: "over r, on facility drawings", unit: "bps", scale: BP, min: 0, max: 600, step: 10 },
+    { id: "lag", name: "Days to advance dividend", unit: "days", scale: 1, min: 0, max: 60, step: 1, int: true },
+    { check: "lgdMode" },
+    { group: "Break-even" },
+    { id: "delta", name: "Yield advantage Δ", hint: "deposit yield over the outside option", unit: "bps", scale: BP, min: 0, max: 300, step: 1 }
+  ];
+  var par = Object.assign({}, M.BASE);
+  var els = {};
+
+  function roundTo(v, step) {
+    var dec = (String(step).split(".")[1] || "").length;
+    return Number((Math.round(v / step) * step).toFixed(Math.min(dec + 2, 8)));
+  }
+  function disp(spec) { return roundTo(par[spec.id] / spec.scale, spec.step / 100); }
+
+  function buildControls() {
+    var host = document.getElementById("controls"), fs = null;
+    SPEC.forEach(function (s) {
+      if (s.group) {
+        fs = document.createElement("fieldset");
+        var lg = document.createElement("legend"); lg.textContent = s.group; fs.appendChild(lg);
+        host.appendChild(fs); return;
+      }
+      if (s.radio) {
+        var div = document.createElement("div"); div.className = "radios"; div.setAttribute("role", "radiogroup");
+        div.setAttribute("aria-label", "Copula for prices and the headline readouts");
+        [["gauss", "Gaussian copula"], ["t", "Student-t copula"]].forEach(function (o) {
+          var lab = document.createElement("label"), inp = document.createElement("input");
+          inp.type = "radio"; inp.name = "copula"; inp.value = o[0]; inp.id = "cop-" + o[0];
+          inp.addEventListener("change", function () { if (inp.checked) { par.copula = o[0]; syncDisabled(); schedule(); } });
+          lab.appendChild(inp); lab.appendChild(document.createTextNode(o[1])); div.appendChild(lab);
+          els["cop-" + o[0]] = inp;
+        });
+        fs.appendChild(div); return;
+      }
+      if (s.check) {
+        var cd = document.createElement("div"); cd.className = "check";
+        var cl = document.createElement("label"), ci = document.createElement("input");
+        ci.type = "checkbox"; ci.id = "in-lgdMode";
+        ci.addEventListener("change", function () { par.lgdMode = ci.checked ? "corr" : "fixed"; schedule(); });
+        cl.appendChild(ci); cl.appendChild(document.createTextNode("State-dependent LGD in the pool"));
+        var h = document.createElement("span"); h.className = "hint";
+        h.textContent = "LGD 15% rising to 40% as the common factor falls to −3; advance dividend two thirds of recovery";
+        cd.appendChild(cl); cd.appendChild(h); fs.appendChild(cd); els.lgdMode = ci; return;
+      }
+      var wrap = document.createElement("div"); wrap.className = "ctl"; wrap.id = "ctl-" + s.id;
+      var top = document.createElement("div"); top.className = "top";
+      var lab = document.createElement("label"); lab.className = "name"; lab.htmlFor = "in-" + s.id;
+      lab.innerHTML = s.name + (s.hint ? '<span class="hint">' + s.hint + "</span>" : "");
+      var numw = document.createElement("span"); numw.className = "num";
+      var num = document.createElement("input"); num.type = "number"; num.id = "in-" + s.id;
+      num.min = s.min; num.max = s.max; num.step = s.step; num.inputMode = "decimal";
+      var unit = document.createElement("span"); unit.className = "unit"; unit.textContent = s.unit; unit.setAttribute("aria-hidden", "true");
+      numw.appendChild(num); numw.appendChild(unit);
+      top.appendChild(lab); top.appendChild(numw);
+      var rng = document.createElement("input"); rng.type = "range"; rng.id = "rg-" + s.id;
+      rng.min = s.min; rng.max = s.max; rng.step = s.step;
+      rng.setAttribute("aria-label", lab.textContent.replace(s.hint ? lab.querySelector(".hint").textContent : "", "") + (s.unit ? " (" + s.unit + ")" : "") + ", slider");
+      wrap.appendChild(top); wrap.appendChild(rng); fs.appendChild(wrap);
+      function setFrom(v, src) {
+        if (!isFinite(v)) return;
+        v = Math.min(s.max, Math.max(s.min, v));
+        if (s.int) v = Math.round(v);
+        par[s.id] = v * s.scale;
+        if (src !== num) num.value = v;
+        if (src !== rng) rng.value = v;
+        schedule();
+      }
+      rng.addEventListener("input", function () { setFrom(parseFloat(rng.value), rng); });
+      num.addEventListener("input", function () { var v = parseFloat(num.value); if (isFinite(v) && v >= s.min && v <= s.max) setFrom(v, num); });
+      num.addEventListener("change", function () { setFrom(parseFloat(num.value), null); });
+      els[s.id] = { num: num, rng: rng, spec: s };
+    });
+  }
+  function syncControls() {
+    SPEC.forEach(function (s) {
+      if (!s.id) return;
+      var v = disp(s); els[s.id].num.value = v; els[s.id].rng.value = v;
+    });
+    els["cop-" + par.copula].checked = true;
+    els.lgdMode.checked = par.lgdMode === "corr";
+    syncDisabled();
+  }
+  function syncDisabled() {
+    document.getElementById("ctl-nu").classList.toggle("dim", par.copula !== "t");
+  }
+
+  document.getElementById("reset").addEventListener("click", function () { par = Object.assign({}, M.BASE); syncControls(); schedule(0); });
+  document.getElementById("preset-ref").addEventListener("click", function () { par.theta = 0.20; par.F = 0; par.fee = 20 * BP; syncControls(); schedule(0); });
+  document.getElementById("preset-hyb").addEventListener("click", function () { par.theta = 0.10; par.F = 0.10; par.fee = 20 * BP; syncControls(); schedule(0); });
+
+  // ---------- formatting ----------
+  // Round half up on the decimal value, not its binary image (18.75 must print 18.8 whichever way it was computed).
+  function fx(v, d) { return Number(v.toFixed(8)).toFixed(d); }
+  function b1(x) { return fx(x / BP, 1); }
+  function bAdapt(x) { var v = x / BP; return Math.abs(v) >= 0.1 || v === 0 ? fx(v, 1) : (Math.abs(v) >= 0.001 ? fx(v, 3) : v.toExponential(1)); }
+  function pc(x) {
+    if (!(x > 0)) return "0%";
+    var v = x * 100;
+    if (v < 1e-4) return "below 0.0001%";
+    if (v >= 10) return fx(v, 1) + "%";
+    if (v >= 1) return fx(v, 2) + "%";
+    var d = Math.min(6, 2 - Math.floor(Math.log10(v)));
+    return fx(v, d) + "%";
+  }
+  function oneIn(x) {
+    if (!(x > 0)) return "never";
+    var y = 1 / x;
+    if (y > 1e7) return "fewer than 1 year in 10 million";
+    return "1 year in " + (y >= 100 ? Math.round(y).toLocaleString("en-US") : y.toFixed(y >= 10 ? 0 : 1));
+  }
+  function pcInt(x) { var v = Number((x * 100).toFixed(6)); return (v % 1 === 0 ? v.toFixed(0) : fx(v, 1)) + "%"; }
+  function copName(c) { return c === "gauss" ? "Gaussian" : "Student-t(" + par.nu + ")"; }
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function td(tr, txt, cls) { var c = document.createElement("td"); c.textContent = txt; if (cls) c.className = cls; tr.appendChild(c); return c; }
+  function th(tr, txt, cls) { var c = document.createElement("th"); c.textContent = txt; c.scope = "col"; if (cls) c.className = cls; tr.appendChild(c); return c; }
+  function legendInto(id, items, kind) {
+    var host = document.getElementById(id); host.textContent = "";
+    items.forEach(function (it) {
+      var s = document.createElement("span"), k = document.createElement("i");
+      k.className = kind === "line" ? "lk" : "sw";
+      if (kind === "line") k.style.borderTopColor = "var(" + it.color + ")"; else k.style.background = "var(" + it.color + ")";
+      s.appendChild(k); s.appendChild(document.createTextNode(it.label)); host.appendChild(s);
+    });
+  }
+  function tipShow(tip, host, x, y, head, rows) {
+    tip.textContent = "";
+    var h = document.createElement("div"); h.className = "t-h"; h.textContent = head; tip.appendChild(h);
+    rows.forEach(function (r) {
+      var d = document.createElement("div"); d.className = "t-r";
+      if (r.color) { var k = document.createElement("i"); k.className = r.kind === "box" ? "sw" : "lk"; if (r.kind === "box") k.style.background = "var(" + r.color + ")"; else k.style.borderTopColor = "var(" + r.color + ")"; d.appendChild(k); }
+      var b = document.createElement("b"); b.textContent = r.value; d.appendChild(b);
+      d.appendChild(document.createTextNode(" " + r.label)); tip.appendChild(d);
+    });
+    tip.style.display = "block";
+    var hw = host.clientWidth, tw = tip.offsetWidth;
+    var left = x + 14; if (left + tw > hw) left = Math.max(0, x - tw - 14);
+    tip.style.left = left + "px"; tip.style.top = Math.max(0, y - 10) + "px";
+  }
+
+  // ---------- chart 1: decomposition ----------
+  var SEG = [
+    { key: "credit", label: "Credit", color: "--s1" },
+    { key: "access", label: "Access", color: "--s2" },
+    { key: "capacity", label: "Capacity", color: "--s3" },
+    { key: "frictions", label: "Frictions", color: "--s4" }
+  ];
+  function roundedRight(x, y, w, h, r) {
+    r = Math.min(r, w, h / 2);
+    return "M" + x + "," + y + "H" + (x + w - r) + "Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) +
+      "V" + (y + h - r) + "Q" + (x + w) + "," + (y + h) + " " + (x + w - r) + "," + (y + h) + "H" + x + "Z";
+  }
+  function niceMax(v) {
+    var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+    var m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+    return m * p;
+  }
+  function drawDecomp(res) {
+    var host = document.getElementById("dec-chart"); host.textContent = "";
+    var W = Math.max(280, host.clientWidth), rowH = 58, padL = 2, padR = 70, top = 6, H = top + rowH * 2 + 26;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img",
+      "aria-label": "Stacked bars of the four clearing-cost terms for the single-name and pooled vehicles; values in the table below." });
+    var rows = [
+      { label: "Single-name funded vehicle", v: res.single },
+      { label: "Pooled vehicle, θ " + pcInt(par.theta) + " / F " + pcInt(par.F), v: { credit: res.pool.credit, access: res.pool.access, capacity: res.pool.k, frictions: res.pool.f, c_star: res.pool.c_star } }
+    ];
+    var maxV = Math.max(rows[0].v.c_star, rows[1].v.c_star) / BP, xm = niceMax(maxV * 1.02);
+    var iw = W - padL - padR, sx = function (v) { return padL + v / xm * iw; };
+    var ticks = 5, axY = top + rowH * 2 + 4;
+    for (var t = 0; t <= ticks; t++) {
+      var tv = xm * t / ticks, tx = sx(tv);
+      svg.appendChild(el("line", { x1: tx, x2: tx, y1: top, y2: axY, stroke: cssVar("--grid"), "stroke-width": 1 }));
+      svg.appendChild(el("text", { x: tx, y: axY + 15, "text-anchor": t === 0 ? "start" : "middle", "font-size": 11, fill: cssVar("--axis-text") }, String(+tv.toFixed(1))));
+    }
+    var tip = document.createElement("div"); tip.className = "tip"; host.appendChild(tip);
+    rows.forEach(function (row, ri) {
+      var y0 = top + ri * rowH;
+      svg.appendChild(el("text", { x: padL, y: y0 + 14, "font-size": 12.5, fill: cssVar("--ink-2") }, row.label));
+      var by = y0 + 22, bh = 22, acc = 0, segs = SEG.filter(function (s) { return row.v[s.key] > 0; });
+      segs.forEach(function (s, si) {
+        var v = row.v[s.key] / BP, x0 = sx(acc), x1 = sx(acc + v), last = si === segs.length - 1;
+        var wpx = Math.max(0, x1 - x0 - (last ? 0 : 2));
+        var shape = last ? el("path", { d: roundedRight(x0, by, Math.max(wpx, 0.5), bh, 4) }) : el("rect", { x: x0, y: by, width: wpx, height: bh });
+        shape.setAttribute("fill", cssVar(s.color));
+        var hit = el("rect", { x: x0, y: by - 4, width: Math.max(x1 - x0, 6), height: bh + 8, fill: "transparent", tabindex: 0,
+          "aria-label": row.label + ", " + s.label + " " + bAdapt(row.v[s.key]) + " bps" });
+        var show = function (evx) {
+          var r = host.getBoundingClientRect();
+          tipShow(tip, host, evx === undefined ? x1 * r.width / W : evx - r.left, by, row.label, [{ value: bAdapt(row.v[s.key]) + " bps", label: s.label, color: s.color, kind: "box" }]);
+          shape.setAttribute("opacity", "0.82");
+        };
+        hit.addEventListener("pointermove", function (e) { show(e.clientX); });
+        hit.addEventListener("focus", function () { show(); });
+        var hide = function () { tip.style.display = "none"; shape.removeAttribute("opacity"); };
+        hit.addEventListener("pointerleave", hide); hit.addEventListener("blur", hide);
+        svg.appendChild(shape); svg.appendChild(hit);
+        acc += v;
+      });
+      svg.appendChild(el("text", { x: sx(acc) + 6, y: by + 15.5, "font-size": 13, "font-weight": 650, fill: cssVar("--ink") }, b1(row.v.c_star) + " bps"));
+    });
+    svg.appendChild(el("line", { x1: padL, x2: padL, y1: top, y2: axY, stroke: cssVar("--axis"), "stroke-width": 1 }));
+    host.insertBefore(svg, tip);
+  }
+  function decTable(res) {
+    var t = document.getElementById("dec-table"); t.textContent = "";
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    th(hr, "bps a year"); th(hr, "Single-name funded"); th(hr, "Pooled, θ " + pcInt(par.theta) + " / F " + pcInt(par.F));
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody"), s = res.single, p = res.pool;
+    var rows = [
+      ["Credit", s.credit, p.credit], ["Access", s.access, p.access],
+      ["Capacity", s.capacity, p.k],
+      ["  buffer lock-up θ s_lock", null, p.lock, "sub"], ["  facility fee F × fee", null, p.commit, "sub"], ["  expected drawn cost", null, p.drawn, "sub"],
+      ["Frictions", s.frictions, p.f],
+      ["Clearing cost c*", s.c_star, p.c_star, "sum"],
+      ["Risk: credit + access", s.risk, p.credit + p.access, "sub"],
+      ["Transfer: capacity + frictions", s.transfer, p.k + p.f, "sub"]
+    ];
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr"); if (r[3] === "sum") tr.className = "sum"; if (r[3] === "sub") tr.className = "subrow";
+      td(tr, r[0].trim()); td(tr, r[1] === null ? "" : bAdapt(r[1])); td(tr, bAdapt(r[2])); tb.appendChild(tr);
+    });
+    var tr2 = document.createElement("tr"); tr2.className = "subrow";
+    td(tr2, "Transfer share of the price"); td(tr2, (s.transfer / s.c_star * 100).toFixed(0) + "%"); td(tr2, ((p.k + p.f) / p.c_star * 100).toFixed(0) + "%");
+    tb.appendChild(tr2);
+    t.appendChild(tb);
+  }
+
+  // ---------- section 2: reliability ----------
+  function relTable(res) {
+    var t = document.getElementById("rel-table"); t.textContent = "";
+    var cap = res.cap, failures = Math.floor(cap * par.N + 1e-9);
+    document.getElementById("rel-sub").textContent = "Capacity θ + F = " + pcInt(cap) + " of covered notional: par on " + failures +
+      " simultaneous failure" + (failures === 1 ? "" : "s") + " among " + par.N + " banks at " + pcInt(1 / par.N) +
+      " each. Real-world probabilities at λP " + pc(par.pd) + ", ρ " + par.rho.toFixed(2) + (par.lgdMode === "corr" ? ", state-dependent LGD" : ", LGD " + pcInt(par.lgd)) +
+      ". Simultaneous timing standard: all of a year's failures land in one advance-dividend window.";
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    th(hr, "");
+    ["gauss", "t"].forEach(function (c) { th(hr, copName(c) + (par.copula === c ? " (chosen)" : ""), par.copula === c ? "sel" : ""); });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody"), g = res.rel.gauss, tt = res.rel.t;
+    var rows = [
+      ["Cannot pay par, per year", pc(g.uncond), pc(tt.uncond)],
+      ["  that is", oneIn(g.uncond), oneIn(tt.uncond), "sub"],
+      ["Shortfall given own bank fails", pc(g.cond), pc(tt.cond)],
+      ["Severity: unpaid share of par, given a shortfall", g.cond > 0 ? pc(g.severity) : "n/a", tt.cond > 0 ? pc(tt.severity) : "n/a"],
+      ["Expected unpaid share, given own bank fails", pc(g.unpaid), pc(tt.unpaid)],
+      ["Expected loss (unpaid share × LGD), given own bank fails", pc(g.loss), pc(tt.loss)],
+      ["Paid in full when own bank fails", pc(1 - g.cond), pc(1 - tt.cond)]
+    ];
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr"); if (r[3]) tr.className = "subrow";
+      td(tr, r[0].trim()); td(tr, r[1], par.copula === "gauss" ? "sel" : ""); td(tr, r[2], par.copula === "t" ? "sel" : "");
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+  }
+
+  // ---------- chart 3: conditional shortfall vs capacity ----------
+  var CURVES = [{ key: "gauss", color: "--s1" }, { key: "t", color: "--s2" }];
+  var YMIN = 1e-6, YMAX = 1;
+  function drawCurve(res) {
+    var host = document.getElementById("curve-chart"); host.textContent = "";
+    legendInto("curve-legend", CURVES.map(function (c) { return { label: copName(c.key), color: c.color }; }), "line");
+    var N = par.N, Wd = 1 / N, cap = res.cap;
+    var W = Math.max(280, host.clientWidth), H = W < 520 ? 250 : 300, mL = 58, mR = 14, mT = 12, mB = 38;
+    var xMax = Math.min(1, Math.max(0.8, Math.ceil((cap + 0.1) * 10) / 10));
+    var iw = W - mL - mR, ih = H - mT - mB;
+    var sx = function (c) { return mL + c / xMax * iw; };
+    var ly = function (p) { var v = Math.max(p, YMIN / 10); return mT + (Math.log10(YMAX) - Math.log10(v)) / (Math.log10(YMAX) - Math.log10(YMIN)) * ih; };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", tabindex: 0,
+      "aria-label": "Line chart: probability of a shortfall given the depositor's own bank fails, against capacity, Gaussian and Student-t copulas. Use left and right arrow keys to read values; the table view lists them." });
+    var defs = el("defs"), cp = el("clipPath", { id: "plotclip" });
+    cp.appendChild(el("rect", { x: mL, y: mT - 6, width: iw + 2, height: ih + 6 })); defs.appendChild(cp); svg.appendChild(defs);
+    for (var e = 0; e >= -6; e--) {
+      var yy = ly(Math.pow(10, e));
+      svg.appendChild(el("line", { x1: mL, x2: mL + iw, y1: yy, y2: yy, stroke: cssVar("--grid"), "stroke-width": 1 }));
+      var lab = e >= -2 ? (Math.pow(10, e + 2)).toFixed(0) + "%" : (Math.pow(10, e + 2)).toFixed(-e - 2) + "%";
+      svg.appendChild(el("text", { x: mL - 6, y: yy + 4, "text-anchor": "end", "font-size": 11, fill: cssVar("--axis-text") }, lab));
+    }
+    var xstep = xMax > 0.8 ? 0.2 : 0.1;
+    for (var xv = 0; xv <= xMax + 1e-9; xv += xstep) {
+      var xx = sx(xv);
+      svg.appendChild(el("line", { x1: xx, x2: xx, y1: mT + ih, y2: mT + ih + 4, stroke: cssVar("--axis"), "stroke-width": 1 }));
+      svg.appendChild(el("text", { x: xx, y: mT + ih + 17, "text-anchor": "middle", "font-size": 11, fill: cssVar("--axis-text") }, Math.round(xv * 100) + "%"));
+    }
+    svg.appendChild(el("line", { x1: mL, x2: mL + iw, y1: mT + ih, y2: mT + ih, stroke: cssVar("--axis"), "stroke-width": 1 }));
+    svg.appendChild(el("text", { x: mL + iw / 2, y: H - 4, "text-anchor": "middle", "font-size": 11.5, fill: cssVar("--ink-2") }, "Capacity θ + F, % of covered notional"));
+    // current design marker
+    var cx = sx(Math.min(cap, xMax));
+    svg.appendChild(el("line", { x1: cx, x2: cx, y1: mT, y2: mT + ih, stroke: cssVar("--ink-2"), "stroke-width": 1 }));
+    var lblRight = cx < mL + iw * 0.7;
+    svg.appendChild(el("text", { x: cx + (lblRight ? 5 : -5), y: mT + 10, "text-anchor": lblRight ? "start" : "end", "font-size": 11, fill: cssVar("--ink-2") }, "Current design " + pcInt(cap)));
+    var g = el("g", { "clip-path": "url(#plotclip)" });
+    CURVES.forEach(function (c) {
+      var cv = res.curve[c.key], d = "";
+      for (var k = 0; k < N; k++) {
+        var x0 = sx(k * Wd), x1 = sx(Math.min((k + 1) * Wd, xMax)), y = ly(cv[k]);
+        d += (k === 0 ? "M" + x0 + "," + y : "V" + y) + "H" + x1;
+        if ((k + 1) * Wd >= xMax) break;
+      }
+      g.appendChild(el("path", { d: d, fill: "none", stroke: cssVar(c.color), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    });
+    svg.appendChild(g);
+    var dots = el("g");
+    CURVES.forEach(function (c) {
+      var v = res.rel[c.key].cond;
+      if (v >= YMIN && cap <= xMax) dots.appendChild(el("circle", { cx: cx, cy: ly(v), r: 4.5, fill: cssVar(c.color), stroke: cssVar("--surface"), "stroke-width": 2 }));
+    });
+    svg.appendChild(dots);
+    // crosshair + tooltip
+    var cross = el("line", { y1: mT, y2: mT + ih, stroke: cssVar("--axis-text"), "stroke-width": 1, visibility: "hidden" });
+    svg.appendChild(cross);
+    var hit = el("rect", { x: mL, y: mT, width: iw, height: ih, fill: "transparent" });
+    svg.appendChild(hit);
+    host.appendChild(svg);
+    var tip = document.createElement("div"); tip.className = "tip"; host.appendChild(tip);
+    var kSel = Math.round(cap * N);
+    function showK(k) {
+      k = Math.max(0, Math.min(N, k)); kSel = k;
+      var capk = k * Wd; if (capk > xMax) return;
+      var xx = sx(capk); cross.setAttribute("x1", xx); cross.setAttribute("x2", xx); cross.setAttribute("visibility", "visible");
+      var r = host.getBoundingClientRect(), scale = r.width / W;
+      tipShow(tip, host, xx * scale, mT * scale + 20, "Capacity " + pcInt(capk) + " (" + k + " failure" + (k === 1 ? "" : "s") + " covered)",
+        CURVES.map(function (c) { return { value: pc(res.curve[c.key][k]), label: copName(c.key), color: c.color }; }));
+    }
+    function hide() { tip.style.display = "none"; cross.setAttribute("visibility", "hidden"); }
+    hit.addEventListener("pointermove", function (ev) {
+      var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width;
+      showK(Math.round((x - mL) / iw * xMax / Wd));
+    });
+    hit.addEventListener("pointerleave", hide);
+    svg.addEventListener("focus", function () { showK(kSel); });
+    svg.addEventListener("blur", hide);
+    svg.addEventListener("keydown", function (ev) {
+      if (ev.key === "ArrowRight") { showK(kSel + 1); ev.preventDefault(); }
+      if (ev.key === "ArrowLeft") { showK(kSel - 1); ev.preventDefault(); }
+    });
+    // table view
+    var t = document.getElementById("curve-table"); t.textContent = "";
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    th(hr, "Capacity (failures covered)"); th(hr, copName("gauss")); th(hr, copName("t"));
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody");
+    for (var k2 = 1; k2 <= N && k2 * Wd <= xMax + 1e-9; k2++) {
+      var tr = document.createElement("tr");
+      td(tr, pcInt(k2 * Wd) + " (" + k2 + ")"); td(tr, pc(res.curve.gauss[k2])); td(tr, pc(res.curve.t[k2]));
+      tb.appendChild(tr);
+    }
+    t.appendChild(tb);
+  }
+
+  // ---------- section 4: buffer versus facility ----------
+  function ruleOut(res) {
+    var R = res.rule, host = document.getElementById("rule-text"); host.textContent = "";
+    var p = res.pool, cap = res.cap, t = document.getElementById("rule-table"); t.textContent = "";
+    if (cap <= 0) { host.textContent = "Set a capacity above zero to compare splits."; return; }
+    var marg, drawnU;
+    if (par.F > 0) { drawnU = p.drawn / par.F; marg = par.fee + drawnU - par.s_lock; }
+    else { drawnU = R.splits[1].drawnPerUnit; marg = R.splits[1].marginal; }
+    var para = document.createElement("p"); para.style.margin = "0";
+    para.textContent = (par.F > 0 ? "At the current split (θ " + pcInt(par.theta) + ", F " + pcInt(par.F) + ")" : "At a half-and-half split of the current " + pcInt(cap) + " capacity") +
+      ": fee " + b1(par.fee) + " + drawn cost per unit " + bAdapt(drawnU) + " − lock-up " + b1(par.s_lock) + " = " + (marg >= 0 ? "+" : "") + bAdapt(marg) + " bps a year per unit of facility.";
+    host.appendChild(para);
+    var v = document.createElement("div"); v.className = "verdict";
+    var ic = document.createElement("span"); ic.className = "ic " + (marg > 0 ? "no" : "ok"); ic.textContent = marg > 0 ? "✕" : "✓";
+    v.appendChild(ic);
+    v.appendChild(document.createTextNode(marg > 0 ? "The all-funded buffer is cheaper: the facility's fee plus drawn cost exceeds the buffer's lock-up premium." :
+      "The facility is cheaper: its fee plus drawn cost is below the buffer's lock-up premium. Check the no-credit-exposure condition below."));
+    host.appendChild(v);
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    th(hr, "Split at " + pcInt(cap) + " capacity"); th(hr, "c*, bps"); th(hr, "Δc* per unit of F, bps"); th(hr, "Facility repaid by advance dividends?");
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody");
+    var aEff = par.lgdMode === "corr" ? null : par.a;
+    function cond(th_) { return aEff === null ? "see note" : (th_ + 1e-12 >= (1 - aEff) * cap ? "yes" : "no: terms out " + pc((1 - aEff) * cap - th_)); }
+    var list = [{ theta: cap, F: 0, c_star: R.allFunded, marginal: null }].concat(R.splits);
+    var cur = { theta: par.theta, F: par.F, c_star: p.c_star, marginal: par.F > 0 ? (p.c_star - R.allFunded) / par.F : null, current: true };
+    var dup = list.some(function (s) { return Math.abs(s.theta - par.theta) < 1e-9; });
+    if (!dup) list.push(cur);
+    list.sort(function (x, y) { return y.theta - x.theta; });
+    list.forEach(function (s) {
+      var tr = document.createElement("tr");
+      var isCur = Math.abs(s.theta - par.theta) < 1e-9;
+      td(tr, "θ " + pcInt(s.theta) + " / F " + pcInt(s.F) + (isCur ? " (current)" : ""), isCur ? "sel" : "");
+      td(tr, b1(s.c_star), isCur ? "sel" : "");
+      td(tr, s.marginal === null || s.F === 0 ? "–" : (s.marginal >= 0 ? "+" : "−") + fx(Math.abs(s.marginal) / BP, 2), isCur ? "sel" : "");
+      td(tr, s.F === 0 ? "no facility" : cond(s.theta), isCur ? "sel" : "");
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    if (aEff === null) {
+      var n = document.createElement("p"); n.className = "sub"; n.style.marginTop = "6px";
+      n.textContent = "With state-dependent LGD the advance dividend varies with the state (40% in the worst years), so the condition θ ≥ (1 − a)(θ + F) depends on which a you hold the facility to; at a = 40% it needs θ ≥ " + pcInt(0.6 * cap) + ".";
+      host.appendChild(n);
+    }
+  }
+
+  // ---------- section 5: break-even ----------
+  function beOut(res) {
+    var host = document.getElementById("be-out"); host.textContent = "";
+    [["Single-name funded vehicle", res.be.single, res.single.c_star], ["Pooled vehicle, θ " + pcInt(par.theta) + " / F " + pcInt(par.F), res.be.pool, res.pool.c_star]].forEach(function (r) {
+      var d = document.createElement("div"); d.className = "be";
+      var l = document.createElement("div"); l.className = "lab"; l.textContent = r[0] + ", Δ " + b1(par.delta) + " bps";
+      var v = document.createElement("div"); v.className = "val";
+      v.textContent = r[1].none ? "none" : r[1].above ? "above 20%" : "λP = " + pc(r[1].pd);
+      var n = document.createElement("div"); n.className = "note";
+      n.textContent = r[1].none ? "The price exceeds Δ at any default probability: capacity and frictions alone cost more." :
+        r[1].above ? "The price stays below Δ up to a 20% default probability." :
+        "Price at the current λP (" + pc(par.pd) + "): " + b1(r[2]) + " bps, " + (r[2] <= par.delta ? "below" : "above") + " Δ.";
+      d.appendChild(l); d.appendChild(v); d.appendChild(n); host.appendChild(d);
+    });
+  }
+
+  // ---------- KPIs ----------
+  function kpis(res) {
+    document.getElementById("kpi-single").innerHTML = b1(res.single.c_star) + "<small>bps</small>";
+    document.getElementById("kpi-pool").innerHTML = b1(res.pool.c_star) + "<small>bps</small>";
+    document.getElementById("kpi-pool-lab").textContent = "Pooled vehicle, θ " + pcInt(par.theta) + " / F " + pcInt(par.F);
+    var r = res.rel[par.copula];
+    document.getElementById("kpi-fail").textContent = pc(r.uncond);
+    document.getElementById("kpi-fail-note").textContent = oneIn(r.uncond) + ", " + copName(par.copula);
+    document.getElementById("kpi-cond").textContent = pc(r.cond);
+    document.getElementById("kpi-cond-note").textContent = copName(par.copula) + "; other copula " + pc(res.rel[par.copula === "gauss" ? "t" : "gauss"].cond);
+  }
+
+  // ---------- update loop ----------
+  var last = null, timer = null;
+  function update() {
+    var t0 = performance.now();
+    last = M.compute(Object.assign({}, par));
+    var t1 = performance.now();
+    render();
+    var t2 = performance.now();
+    document.getElementById("perf").textContent = "Last update: model " + Math.round(t1 - t0) + " ms, drawing " + Math.round(t2 - t1) + " ms.";
+  }
+  function render() {
+    if (!last) return;
+    legendInto("dec-legend", SEG, "box");
+    kpis(last); drawDecomp(last); decTable(last); relTable(last); drawCurve(last); ruleOut(last); beOut(last);
+  }
+  function schedule(ms) { clearTimeout(timer); timer = setTimeout(update, ms === undefined ? 90 : ms); }
+
+  buildControls(); syncControls(); update();
+  var rw = null;
+  window.addEventListener("resize", function () { clearTimeout(rw); rw = setTimeout(render, 120); });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var onScheme = function () { render(); };
+    if (mq.addEventListener) mq.addEventListener("change", onScheme); else if (mq.addListener) mq.addListener(onScheme);
+  }
+})();
+</script>
+</body>
+</html>
