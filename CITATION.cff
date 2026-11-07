@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use or challenge this work, please cite it as below."
+title: "Cash That Never Sleeps: a small manual of commercial deposit liquidity at regional banks, worked with frontier AI models"
+type: report
+authors:
+  - family-names: Chen
+    given-names: Chih
+date-released: 2026-11-02
+version: "November 2026"
+url: "https://github.com/chihchen22/cash-that-never-sleeps"
+repository-code: "https://github.com/chihchen22/cash-that-never-sleeps"
+license: CC-BY-4.0
+keywords:
+  - uninsured deposits
+  - deposit runs
+  - tokenized deposits
+  - settlement hours
+  - regional banks
+  - private deposit protection
+  - mutual insurance
+  - reciprocal deposits
+  - copula
+  - AI-assisted research

@@ -1,0 +1,122 @@
+{
+ "failures_2023.json": {
+  "bytes": 932,
+  "pulled_utc": "2026-11-02T07:13:06Z",
+  "url": "https://api.fdic.gov/banks/failures?filters=FAILDATE:[\"2023-01-01\"+TO+\"2023-12-31\"]&fields=CERT%2CNAME%2CFAILDATE%2CQBFASSET%2CQBFDEP&sort_by=CERT&sort_order=ASC&limit=1000&format=json"
+ },
+ "financials_20221231_p000.json": {
+  "bytes": 212539,
+  "pulled_utc": "2026-11-02T07:12:49Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20221231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=0&format=json"
+ },
+ "financials_20221231_p001.json": {
+  "bytes": 213237,
+  "pulled_utc": "2026-11-02T07:12:50Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20221231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=1000&format=json"
+ },
+ "financials_20221231_p002.json": {
+  "bytes": 214155,
+  "pulled_utc": "2026-11-02T07:12:51Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20221231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=2000&format=json"
+ },
+ "financials_20221231_p003.json": {
+  "bytes": 214564,
+  "pulled_utc": "2026-11-02T07:12:52Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20221231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=3000&format=json"
+ },
+ "financials_20221231_p004.json": {
+  "bytes": 165238,
+  "pulled_utc": "2026-11-02T07:12:52Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20221231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=4000&format=json"
+ },
+ "financials_20230630_p000.json": {
+  "bytes": 212508,
+  "pulled_utc": "2026-11-02T07:12:54Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20230630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=0&format=json"
+ },
+ "financials_20230630_p001.json": {
+  "bytes": 213182,
+  "pulled_utc": "2026-11-02T07:12:54Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20230630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=1000&format=json"
+ },
+ "financials_20230630_p002.json": {
+  "bytes": 214139,
+  "pulled_utc": "2026-11-02T07:12:55Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20230630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=2000&format=json"
+ },
+ "financials_20230630_p003.json": {
+  "bytes": 214520,
+  "pulled_utc": "2026-11-02T07:12:56Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20230630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=3000&format=json"
+ },
+ "financials_20230630_p004.json": {
+  "bytes": 152532,
+  "pulled_utc": "2026-11-02T07:12:57Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20230630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=4000&format=json"
+ },
+ "financials_20241231_p000.json": {
+  "bytes": 212770,
+  "pulled_utc": "2026-11-02T07:12:58Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20241231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=0&format=json"
+ },
+ "financials_20241231_p001.json": {
+  "bytes": 213314,
+  "pulled_utc": "2026-11-02T07:12:59Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20241231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=1000&format=json"
+ },
+ "financials_20241231_p002.json": {
+  "bytes": 214476,
+  "pulled_utc": "2026-11-02T07:13:00Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20241231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=2000&format=json"
+ },
+ "financials_20241231_p003.json": {
+  "bytes": 214453,
+  "pulled_utc": "2026-11-02T07:13:01Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20241231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=3000&format=json"
+ },
+ "financials_20241231_p004.json": {
+  "bytes": 119581,
+  "pulled_utc": "2026-11-02T07:13:02Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20241231&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=4000&format=json"
+ },
+ "financials_20260630_p000.json": {
+  "bytes": 213021,
+  "pulled_utc": "2026-11-02T07:13:02Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20260630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=0&format=json"
+ },
+ "financials_20260630_p001.json": {
+  "bytes": 213465,
+  "pulled_utc": "2026-11-02T07:13:03Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20260630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=1000&format=json"
+ },
+ "financials_20260630_p002.json": {
+  "bytes": 214882,
+  "pulled_utc": "2026-11-02T07:13:04Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20260630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=2000&format=json"
+ },
+ "financials_20260630_p003.json": {
+  "bytes": 214497,
+  "pulled_utc": "2026-11-02T07:13:05Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20260630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=3000&format=json"
+ },
+ "financials_20260630_p004.json": {
+  "bytes": 66838,
+  "pulled_utc": "2026-11-02T07:13:06Z",
+  "url": "https://api.fdic.gov/banks/financials?filters=REPDTE:20260630&fields=CERT%2CNAME%2CREPDTE%2CASSET%2CDEP%2CDEPDOM%2CDEPINS%2CDEPUNINS%2CDEPCSBQ%2CBKCLASS&sort_by=CERT&sort_order=ASC&limit=1000&offset=4000&format=json"
+ },
+ "history_2023_2026_p000.json": {
+  "bytes": 201923,
+  "pulled_utc": "2026-11-02T07:13:07Z",
+  "url": "https://api.fdic.gov/banks/history?filters=EFFDATE:[2023-01-01+TO+2026-06-30]+AND+ACQ_CERT:[1+TO+99999999]&fields=CHANGECODE%2CCHANGECODE_DESC%2CACQ_CERT%2COUT_CERT%2CEFFDATE&sort_by=EFFDATE&sort_order=ASC&limit=10000&offset=0&format=json"
+ },
+ "qbp_notes_users_2026q2.pdf": {
+  "bytes": 231808,
+  "pulled_utc": "2026-11-02T07:11:10Z",
+  "url": "https://www.fdic.gov/quarterly-banking-profile/qbp-notes-users-second-quarter-2026.pdf"
+ },
+ "qbp_time_series_2026q2.xlsx": {
+  "bytes": 2530850,
+  "pulled_utc": "2026-11-02T07:11:06Z",
+  "url": "https://www.fdic.gov/quarterly-banking-profile/qbp-time-series-spreadsheets-second-quarter-2026.xlsx"
+ }
+}

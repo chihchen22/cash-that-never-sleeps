@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settlement Clock Dashboard</title>
+<meta name="description" content="Interactive model: the settlement clock of a tokenized deposit balance. The always-on collateralized netting facility (R7) against the prefunded joint account (R9), how often the cap binds, the closed-window calendar and the price by deposit type.">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6e6d68;
+  --axis-text: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --ring: rgba(11,11,11,0.10);
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --banner-bg: #fff6e0;
+  --banner-ink: #5a4100;
+  --banner-edge: #eda100;
+  --good-ink: #006300;
+  --bad-ink: #a12a2a;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --focus: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #a3a29b; --axis-text: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-ink: #86b6ef;
+    --banner-bg: #2a2310; --banner-ink: #f3d68a; --banner-edge: #c98500;
+    --good-ink: #0ca30c; --bad-ink: #e66767;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --focus: #86b6ef;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321;
+  --ink: #f0efec; --ink-2: #c3c2b7; --muted: #a3a29b; --axis-text: #898781;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+  --accent: #3987e5; --accent-ink: #86b6ef;
+  --banner-bg: #2a2310; --banner-ink: #f3d68a; --banner-edge: #c98500;
+  --good-ink: #0ca30c; --bad-ink: #e66767;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --focus: #86b6ef;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--accent-ink); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; }
+.toplink { font-size: 0.85rem; margin: 0 0 6px; }
+header h1 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 4px; font-weight: 650; letter-spacing: -0.01em; }
+header p.sub { margin: 0 0 14px; color: var(--ink-2); max-width: 70ch; }
+.banner {
+  background: var(--banner-bg); color: var(--banner-ink); border-left: 4px solid var(--banner-edge);
+  padding: 10px 14px; border-radius: 6px; margin: 0 0 16px; font-size: 0.93rem;
+}
+.banner strong { font-weight: 650; }
+.kpis {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 16px;
+}
+.kpi { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.kpi .lab { font-size: 0.8rem; color: var(--ink-2); line-height: 1.3; }
+.kpi .val { font-size: 1.6rem; font-weight: 650; line-height: 1.2; margin-top: 2px; }
+.kpi .val small { font-size: 0.8rem; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
+.kpi .note { font-size: 0.78rem; color: var(--muted); }
+.layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+aside.inputs {
+  background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 12px 14px 14px;
+  position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto;
+}
+.btnrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+button {
+  font: inherit; font-size: 0.85rem; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--ring); border-radius: 6px; padding: 5px 10px; cursor: pointer; min-height: 32px;
+}
+button:hover { border-color: var(--axis); }
+button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+fieldset { border: 0; border-top: 1px solid var(--grid); margin: 10px 0 0; padding: 8px 0 0; min-width: 0; }
+legend { font-weight: 650; font-size: 0.85rem; color: var(--ink-2); padding: 0 6px 0 0; text-transform: uppercase; letter-spacing: 0.04em; }
+.ctl { margin: 8px 0 2px; }
+.ctl .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ctl label.name, .ctl span.name { font-size: 0.86rem; line-height: 1.25; }
+.ctl .name .hint { display: block; font-size: 0.74rem; color: var(--muted); }
+.ctl .num { display: flex; align-items: center; gap: 4px; flex: none; }
+.ctl input[type=number] {
+  width: 76px; font: inherit; font-size: 0.86rem; padding: 3px 5px; text-align: right;
+  background: var(--page); color: var(--ink); border: 1px solid var(--axis); border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.ctl.pair input[type=number] { width: 58px; }
+.ctl .unit { font-size: 0.78rem; color: var(--muted); width: 34px; }
+.ctl .to { font-size: 0.78rem; color: var(--muted); }
+.ctl input[type=range] { width: 100%; margin: 4px 0 0; accent-color: var(--accent); height: 22px; }
+.radios { display: flex; gap: 6px 14px; margin: 8px 0 2px; font-size: 0.88rem; flex-wrap: wrap; }
+.radios .rlab { flex-basis: 100%; font-size: 0.86rem; }
+.radios label, .check label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.check { margin: 10px 0 2px; font-size: 0.86rem; }
+.check .hint { display: block; font-size: 0.74rem; color: var(--muted); margin-left: 24px; }
+.dim { opacity: 0.45; }
+main.outputs { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 14px 16px 16px; min-width: 0; }
+.card h2 { font-size: 1.05rem; margin: 0 0 2px; font-weight: 650; }
+.card h3 { font-size: 0.92rem; margin: 14px 0 2px; font-weight: 650; }
+.card p.sub { margin: 0 0 10px; color: var(--ink-2); font-size: 0.88rem; }
+.card p.note { margin: 8px 0 0; color: var(--muted); font-size: 0.8rem; }
+.pub { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+       color: var(--banner-ink); background: var(--banner-bg); border: 1px solid var(--banner-edge); border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 1px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.83rem; color: var(--ink-2); margin: 2px 0 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.lk { width: 16px; height: 0; border-top: 2px solid; display: inline-block; flex: none; }
+.lk.dash { border-top-style: dashed; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart svg text { font-family: inherit; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--ring); box-shadow: 0 4px 14px rgba(0,0,0,0.14); border-radius: 8px;
+  padding: 7px 9px; font-size: 0.8rem; line-height: 1.35; white-space: nowrap; z-index: 5; display: none;
+}
+.tip .t-h { color: var(--ink-2); margin-bottom: 3px; }
+.tip .t-r { display: flex; align-items: center; gap: 6px; }
+.tip .t-r b { font-weight: 650; }
+table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; }
+thead th { color: var(--ink-2); font-weight: 600; font-size: 0.8rem; vertical-align: bottom; }
+tbody tr.sum td { font-weight: 650; border-top: 1px solid var(--axis); }
+tbody tr.subrow td { color: var(--ink-2); font-size: 0.8rem; }
+tbody tr.subrow td:first-child { padding-left: 20px; }
+tbody tr.grp td { font-weight: 600; color: var(--ink-2); background: var(--surface-2); font-size: 0.8rem; }
+td.sel, th.sel, tr.sel td { background: var(--surface-2); }
+td.l, th.l { text-align: left; }
+.tablewrap { overflow-x: auto; margin-top: 8px; }
+.verdict { margin: 10px 0 0; padding: 8px 10px; border-radius: 6px; background: var(--surface-2); font-size: 0.9rem; }
+.verdict .ic { font-weight: 700; margin-right: 6px; }
+.ok { color: var(--good-ink); }
+.no { color: var(--bad-ink); }
+.split2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.split3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.be { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.be .lab { font-size: 0.82rem; color: var(--ink-2); }
+.be .val { font-size: 1.35rem; font-weight: 650; }
+.be .note { font-size: 0.78rem; color: var(--muted); }
+details { margin-top: 10px; }
+details > summary { cursor: pointer; color: var(--accent-ink); font-size: 0.88rem; }
+details.method > summary { font-size: 1.05rem; font-weight: 650; color: var(--ink); }
+.method .eq {
+  font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", Georgia, serif; font-size: 1.02rem;
+  background: var(--surface-2); padding: 8px 10px; border-radius: 6px; overflow-x: auto; margin: 6px 0 10px; white-space: nowrap;
+}
+.method h3 { font-size: 0.95rem; margin: 16px 0 4px; }
+.method p, .method li { font-size: 0.9rem; color: var(--ink-2); max-width: 80ch; }
+.method i { font-family: "Cambria Math", Georgia, serif; }
+footer { margin-top: 18px; font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  aside.inputs { position: static; max-height: none; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); position: sticky; top: 0; z-index: 6;
+          background: var(--page); padding: 6px 0; margin-left: 0; margin-right: 0; }
+  .kpis { gap: 6px; }
+  .kpi { padding: 5px 8px; border-radius: 8px; }
+  .kpi .lab { font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .val { font-size: 1.1rem; margin-top: 0; }
+  .kpi .note { display: none; }
+  .split3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .split2 { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.3rem; }
+  th, td { padding: 4px 5px; }
+  table { font-size: 0.8rem; }
+}
+@media (forced-colors: active) {
+  .sw, .lk { forced-color-adjust: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="toplink"><a href="index.html">Run clock dashboard (Chapter 3)</a> · Settlement clock dashboard (Chapter 6)</p>
+  <h1>The settlement clock of a tokenized deposit: interactive model (Cash That Never Sleeps, Chapter 6)</h1>
+  <p class="sub">Price the always-on collateralized netting facility (route R7) against the prefunded joint account (route R9), see how often the facility's cap binds on a weekend, alone and across members, how the Fedwire calendar changes the sizing, and what each deposit type should be charged. Change any input and the results recompute.</p>
+  <div class="banner" role="note"><strong>Illustrative parameters, calibrated to no bank, facility or member.</strong> Every input is an assumption chosen to make the arithmetic concrete; the weekend peak net debit in particular is a number no bank reports. Defaults are the base case of the settlement and routes engines (<code>model/settlement.py</code>, <code>model/routes.py</code>). See the <a href="https://github.com/chihchen22/cash-that-never-sleeps">manual and PROCESS.md</a> for definitions, sources and how the numbers were produced and checked.</div>
+</header>
+
+<section class="kpis" aria-label="Headline results" aria-live="polite">
+  <div class="kpi"><div class="lab" id="kpi-r7-lab">R7 facility, base price</div><div class="val" id="kpi-r7">...</div><div class="note" id="kpi-r7-note">bps a year on the whole balance</div></div>
+  <div class="kpi"><div class="lab">R9 joint account, base price</div><div class="val" id="kpi-r9">...</div><div class="note" id="kpi-r9-note">bps a year on the whole balance</div></div>
+  <div class="kpi"><div class="lab">Lendable share, R7 (illustrative)</div><div class="val" id="kpi-lend">...</div><div class="note" id="kpi-lend-note">S2 screen</div></div>
+  <div class="kpi"><div class="lab">Cap binds, per weekend</div><div class="val" id="kpi-bind">...</div><div class="note" id="kpi-bind-note">per member</div></div>
+</section>
+
+<div class="layout">
+<aside class="inputs" aria-label="Model inputs">
+  <div class="btnrow">
+    <button type="button" class="primary" id="reset">Reset to base case</button>
+    <button type="button" id="preset-10" title="Always-on share 10%, the largest that passes S2 at the 0.90 bar">Share 10%</button>
+    <button type="button" id="preset-156" title="Median weekend peak net debit 1.56% of the balance">Median 1.56%</button>
+  </div>
+  <div id="controls"></div>
+</aside>
+
+<main class="outputs">
+  <section class="card" aria-labelledby="h-price">
+    <h2 id="h-price">1. R7 facility against R9 joint account</h2>
+    <p class="sub" id="price-sub">Basis points a year on the whole tokenized balance, low and high ends of each term with the base at the midpoint. Lendable share on the absolute convention: bills or reserves held for the settlement clock are not lendable.</p>
+    <div class="tablewrap"><table id="price-table" aria-label="R7 and R9 price in four terms"></table></div>
+    <div id="price-verdict"></div>
+    <h3>Base price against the share</h3>
+    <div class="legend" id="share-legend"></div>
+    <div class="chart" id="share-chart"></div>
+    <p class="note" id="share-note"></p>
+  </section>
+
+  <section class="card" aria-labelledby="h-sun">
+    <h2 id="h-sun">2. The Sunday settlement cash source</h2>
+    <p class="sub">At the Sunday 9:00 p.m. Fedwire Funds opening every net debtor settles in reserves, so it needs reserves or collateralized Reserve Bank credit of at least its cap. R7's published price assumes case (a). Case (b1) adds R7's encumbrance spread on a further share; case (b2) adds R9's reserve convention (loan spread over bills plus the bill yield over IORB).</p>
+    <div class="tablewrap"><table id="sun-table" aria-label="R7 price by Sunday settlement cash source"></table></div>
+    <div id="sun-ties"></div>
+    <h3>Daylight overdraft fee at the Sunday opening</h3>
+    <div class="tablewrap"><table id="dod-table" aria-label="Expected daylight overdraft fee"></table></div>
+    <p class="note">The overdraft runs from Sunday 21:00 to Monday 12:00 (15 hours), repaid from a delivery-versus-payment sale or repo of the bills after the 8:30 a.m. securities opening; fee on the policy's 24-hour day and 360-day year, daily rate truncated to seven decimals.</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-bind">
+    <h2 id="h-bind">3. How often the cap binds, and what it takes to bind rarely</h2>
+    <p class="sub" id="bind-sub">One member, a normal 50-hour weekend. The weekend peak net debit (to all counterparties) is lognormal; the cap binds when the peak exceeds the always-on tier.</p>
+    <div class="split3" id="bind-out"></div>
+    <h3>Cap ladder: the backing a member needs, peak debit held fixed in balance terms</h3>
+    <div class="tablewrap"><table id="ladder-table" aria-label="Cap ladder per member"></table></div>
+    <h3>The median peak debit at which the lendable screen and a rare cap hold together</h3>
+    <div class="tablewrap"><table id="med-table" aria-label="Largest median peak debit compatible with S2"></table></div>
+    <div id="med-verdict"></div>
+    <h3>R9: payments rejected without a weekend top-up</h3>
+    <div class="tablewrap"><table id="rej-table" aria-label="R9 rejection without top-up"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-coh">
+    <h2 id="h-coh">4. The same weekend across members (open debtor cohort)</h2>
+    <p class="sub" id="coh-sub"></p>
+    <div class="tablewrap"><table id="coh-table" aria-label="Same-weekend bind counts"></table></div>
+    <h3>Joint cap ladder at this copula and correlation</h3>
+    <div class="tablewrap"><table id="joint-table" aria-label="Joint cap ladder"></table></div>
+    <details><summary>Queued amounts (Monte Carlo): published values, not recomputed</summary>
+      <p class="note">The queued amount (peak debit above the caps, summed over the cohort, as a share of the cohort's always-on tier) comes from the engine's Monte Carlo of 500,000 weekends (seed 20261120). The table reports the engine's published values at the base case (20 members, sigma 0.8, median 25% of a 20% tier) and does not move with the inputs. Source: results_settlement.md, Section 3, Table A1.</p>
+      <div class="tablewrap"><table id="mc-table" aria-label="Published queued amounts"></table></div>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="h-cal">
+    <h2 id="h-cal">5. The closed-window calendar</h2>
+    <p class="sub" id="cal-sub">Every closed window of the Fedwire Funds Service in the year, on nominal Eastern schedule hours: it opens 21:00 on the calendar day before each business day and closes 19:00, so a window between business days lasts 24 hours per calendar day less 22. The peak debit's median scales with hours / 50, or its square root.</p>
+    <div class="tablewrap"><table id="win-table" aria-label="Closed windows and bind probability by window type"></table></div>
+    <h3>Schedule scenarios, 2026 calendar</h3>
+    <div class="tablewrap"><table id="scen-table" aria-label="Schedule scenarios"></table></div>
+    <div id="scen-verdict"></div>
+    <h3>Today's schedule, 2026 and 2027: policies P1 and P2</h3>
+    <div class="tablewrap"><table id="pol-table" aria-label="Policies P1 and P2"></table></div>
+    <h3>Seven days (hypothetical): the pass is conditional</h3>
+    <div class="tablewrap"><table id="seven-table" aria-label="Seven-day schedule with weekend cash source"></table></div>
+    <p class="note">The daylight-saving check (two weekends a year run 49 and 51 elapsed hours) is in the engine's results, Section 4; this page uses nominal hours, the engine's convention.</p>
+  </section>
+
+  <section class="card" aria-labelledby="h-dt">
+    <h2 id="h-dt">6. By deposit type: which clock, and what the routes cost</h2>
+    <p class="sub">A plain account above the insured limit runs on the run clock only; a tokenized balance runs on the settlement clock whether insured or not, where its transfers are netted between banks; a tokenized balance above the limit runs on both. Each row is a priced variant, open items resolved and S2 not applied (the strict R5 row excepted), so the table prices the risk each type carries and does not choose a route. R8 is R6 plus R7 less the shared ledger; R6 plus R9 has no shared ledger. Lendable shares add on the absolute convention.</p>
+    <div class="tablewrap"><table id="dt-table" aria-label="Price by deposit type"></table></div>
+    <h3>The cheapest route for both clocks, by Sunday cash source</h3>
+    <div class="tablewrap"><table id="both-table" aria-label="Cheapest route for both clocks"></table></div>
+    <p class="note" id="dt-note"></p>
+  </section>
+
+  <section class="card">
+    <details class="method" id="method">
+      <summary>Method: the formulas used, in the notation of Chapter 6</summary>
+      <h3>Four terms, R7 and R9</h3>
+      <div class="eq">R7 = credit + access + <i>s</i> × enc + frictions,&nbsp;&nbsp; at the low and high ends; base = (low + high) / 2</div>
+      <div class="eq">R9 = credit + access + <i>s</i> × (loan spread + bill − IORB × 1<sub>[balance earns IORB]</sub>) + frictions</div>
+      <p><i>s</i> is the always-on share (R7) and the prefunded share (R9), compared at the same share as in the routes engine. Lendable share is 1 − <i>s</i>, and S2 passes when it is at least the bar. Bills positioned are <i>s</i> / (1 − haircut); the haircut gross-up is not priced again (it sits in frictions) and appears here only as a memo on the lendable share.</p>
+      <h3>Crossover</h3>
+      <div class="eq"><i>s</i>* = (<i>a</i><sub>R7</sub> − <i>a</i><sub>R9</sub>) / (<i>b</i><sub>R9</sub> − <i>b</i><sub>R7</sub>),&nbsp;&nbsp; base(<i>s</i>) = <i>a</i> + <i>b s</i></div>
+      <p>Both base prices are linear in the share, so they cross once; below <i>s</i>* R9 is cheaper. If R9's intercept and slope are both lower, R9 is cheaper at every share; a negative <i>s</i>* means R7 is cheaper at every positive share.</p>
+      <h3>Sunday settlement cash</h3>
+      <div class="eq">(a): + 0;&nbsp;&nbsp; (b1): + <i>s</i> × enc;&nbsp;&nbsp; (b2): + <i>s</i> × (loan spread + bill − IORB);&nbsp;&nbsp; lendable (b1), (b2) = 1 − 2<i>s</i></div>
+      <p>Reserves in a master account earn IORB, so case (b2) always nets IORB, whatever the joint-account switch. The mixed source takes a share <i>m</i> of the Sunday capacity from the chosen case and the rest from loans already pledged: price = R7 + <i>m</i> × extra, lendable = 1 − <i>s</i> − <i>m s</i>, linear in <i>m</i> as in the engine's tie, the <i>m</i> at which R9's base equals R7's: <i>m</i>* = (R9 − R7) / extra<sub>base</sub>.</p>
+      <div class="eq">overdraft fee = 52 × <i>s</i> E[min(<i>X</i>, 1)] × floor(fee / 360, 7 dp) × 15 / 24,&nbsp;&nbsp; E[min(<i>X</i>, <i>c</i>)] = <i>m</i> e<sup><i>σ</i>²/2</sup> Φ(−<i>d</i> − <i>σ</i>) + <i>c</i> Φ(<i>d</i>),&nbsp; <i>d</i> = ln(<i>m</i>/<i>c</i>)/<i>σ</i></div>
+      <h3>Cap binding, one member</h3>
+      <div class="eq"><i>X</i> = peak net debit / tier ~ lognormal(median <i>m</i><sub>B</sub> / <i>s</i>, <i>σ</i>);&nbsp;&nbsp; P(bind) = Φ(−ln(<i>s</i> / <i>m</i><sub>B</sub>) / <i>σ</i>);&nbsp;&nbsp; per year 1 − (1 − P)<sup>52</sup></div>
+      <p><i>m</i><sub>B</sub> is the median weekend peak net debit as a share of the balance (the engines carry it as 25 percent of a 20 percent tier, 5 percent of the balance). The cap ladder holds <i>m</i><sub>B</sub> fixed and moves the backing: backing = <i>m</i><sub>B</sub> exp(<i>σ z</i><sub>1−p</sub>) for a target <i>p</i>, priced with R7's four terms at that share, Sunday cash case (a). The median boundary is (1 − bar) / exp(<i>σ z</i><sub>0.99</sub>), and (1 − bar)(1 − haircut) / exp(<i>σ z</i><sub>0.99</sub>) counting the grossed-up bills.</p>
+      <div class="eq">R9 without top-up: <i>d</i> = ln(<i>m</i><sub>B</sub> / <i>s</i>) / <i>σ</i>;&nbsp; P(rejected) = Φ(<i>d</i>);&nbsp; E[rejected] = <i>m</i><sub>B</sub> e<sup><i>σ</i>²/2</sup> Φ(<i>d</i> + <i>σ</i>) − <i>s</i> Φ(<i>d</i>)</div>
+      <h3>Same weekend across members</h3>
+      <div class="eq"><i>Z<sub>i</sub></i> = √<i>ρ</i> <i>F</i> + √(1 − <i>ρ</i>) <i>e<sub>i</sub></i>;&nbsp;&nbsp; number binding | factor ~ Binomial(<i>M</i>, <i>p</i>(factor))</div>
+      <p>Each member keeps its lognormal marginal, so its own bind rate does not depend on the copula; the copula changes how binds arrive together. Gaussian: <i>p</i>(<i>z</i>) = Φ((Φ<sup>−1</sup>(<i>P</i>) − √<i>ρ z</i>) / √(1 − <i>ρ</i>)). Student-t(5): <i>p</i>(<i>z</i>, <i>W</i>) = Φ((<i>c</i> √(<i>W</i>/5) − √<i>ρ z</i>) / √(1 − <i>ρ</i>)), <i>W</i> ~ χ²<sub>5</sub>, with <i>c</i> set so the marginal is <i>P</i>. The counts are computed by quadrature over the factor, as in the engine, on grids coarser than the engine's for speed: 2,001 points on [−8, 8] for the Gaussian (engine 4,001), and 161 × 120 in (<i>z</i>, <i>W</i>) for the Student-t (engine 401 × 240), <i>W</i> on a log grid from 10<sup>−4</sup> to 80. The joint cap ladder solves for the per-member rate at which P(at least <i>k</i> of <i>M</i>) equals the target, by bisection on its logarithm between 10<sup>−10</sup> and 0.6 (36 steps, as in the engine), and converts it to a backing as above. A quarter is ⌈<i>M</i>/4⌉. Every multi-member statistic describes an open debtor cohort, members drawn as net debtors with receivers outside the modelled set, not a closed membership.</p>
+      <h3>Closed-window calendar</h3>
+      <div class="eq">hours = 24 × (days from business day <i>a</i> to <i>b</i>) − 22;&nbsp;&nbsp; P<sub>win</sub>(<i>h</i>, backing) = Φ(−ln(backing / (<i>m</i><sub>B</sub> <i>g</i>(<i>h</i>))) / <i>σ</i>),&nbsp; <i>g</i> = <i>h</i>/50 or √(<i>h</i>/50)</div>
+      <p>Business days: Monday to Friday less the Reserve Bank weekday closings of 2026 and 2027 (today); Sunday to Friday with weekday holidays open (the announced 22x6 schedule, not yet in effect); every day (seven days, hypothetical). Each business day is preceded by one window, and a window belongs to the year of the business day that ends it. P1 holds the backing at the share all year; P2 sizes it so the longest window binds no more often than a normal weekend under P1: backing = <i>s g</i>(<i>h</i><sub>max</sub>). "Sized to binds a year" finds by bisection (80 steps on 10<sup>−4</sup> to 1) the backing at which the expected binds a year equal the routes engine's 52 × P(bind). Expected binds a year are the sum of P<sub>win</sub> over the windows; P(at least one) = 1 − Π(1 − P<sub>win</sub>). Seven days: with Fedwire Securities and repo still on weekdays, the pass needs weekend Reserve Bank credit, or reserves of <i>s g</i>(<i>h</i>) held for <i>h</i> = 50 or 65.25 hours (Friday 15:15 to Monday 8:30), which count as not lendable.</p>
+      <h3>By deposit type</h3>
+      <div class="eq">R8 = R6 + R7 − saving,&nbsp; saving(<i>x</i>) = <i>x</i> × min(R6 access, R7 access low) + 1 bp for <i>x</i> &gt; 0, and 0 at <i>x</i> = 0;&nbsp;&nbsp; low <i>x</i> = 1, base 0.5, high 0;&nbsp; lendable = 1 − 3% − <i>s</i></div>
+      <p>R6 (the mutual with a Treasury-backed tail, reference design) and the strict R5 row are fixed inputs from the mutual-tail and clearing-cost engines and do not move with this page's inputs: R6 21.03 bps at a lendable share of 0.97 (3 percent capital contribution), R6 access term 0.37 bps; R5 sized to the S5 standard 37.94 at 1.00. The cheapest pairing for both clocks is the lower base of R8 (with that Sunday cash case) and R6 + R9.</p>
+      <h3>What this page does not do</h3>
+      <ul>
+        <li>The queued amounts, the cohort-average secured debit and the pooled two-member cap come from the engine's Monte Carlo; the page shows the published values at the base case and does not recompute them.</li>
+        <li>No liquidity-buffer (analysis C), sponsored non-member (D) or Monday cash (E) calculations, and no elapsed-hours (daylight-saving) recomputation; those are in the engine's results.</li>
+        <li>Weekends are independent of each other; payment paths and the release of queued payments are not modelled.</li>
+        <li>The Student-t degrees of freedom are fixed at 5, the engine's value; the 52 weekends a year and the overdraft hours are fixed.</li>
+      </ul>
+      <p>The JavaScript on this page is tested against the settlement and routes engines on the base case and nine varied parameter sets (prices within 0.05 basis points, probabilities within 2 percent relative).</p>
+    </details>
+  </section>
+</main>
+</div>
+<footer><span id="perf"></span> All computation runs in your browser; nothing is sent anywhere. Every number is illustrative and calibrated to no bank. Chih Chen, Cash That Never Sleeps, 2026. The views expressed are my own and do not represent those of any employer or organization with which I am affiliated. Not legal, investment or regulatory advice; neither arrangement described is deposit insurance. Code MIT; text CC BY 4.0. <a href="https://github.com/chihchen22/cash-that-never-sleeps">Repository</a>.</footer>
+</div>
+
+<script id="model">
+/* Model core: plain functions, no DOM. Evaluated by tests/parity_settlement.mjs in node. */
+var SCModel = (function () {
+  "use strict";
+  var SQRTPI = Math.sqrt(Math.PI), SQRT2 = Math.SQRT2, BP = 1e-4, TRUNC = 1e-16;
+  var WEEKENDS = 52, NU = 5, H_REF = 50, OPEN_PREV = 21, CLOSE = 19;
+  var SEC_OPEN = 8.5, SEC_CUTOFF = 15.25, STAY_END = 17, DOD_REPAY = 12;
+  var H_SEC_GAP = 24 * 3 + SEC_OPEN - SEC_CUTOFF;          // Friday 15:15 to Monday 8:30
+  var DOD_H = (24 - OPEN_PREV) + DOD_REPAY, DOD_H_1700 = (24 - OPEN_PREV) + STAY_END;
+  var TARGETS = [{ key: "1pct", label: "1% of weekends", p: 0.01 }, { key: "1in520", label: "once in ten years (1 in 520 weekends)", p: 1 / 520 }];
+
+  // Fixed inputs from the mutual-tail and clearing-cost engines (not recomputed here).
+  var FIXED = { r6Price: 0.00210318834175687, r6Access: 3.742265411879707e-05, thetaM: 0.03,
+                r5Sized: 0.003793749999999851, r5SizedLend: 1.0, r8AccShare: 0.5, r8FricSave: 0.0001 };
+
+  // ---------- special functions (as in the run clock dashboard) ----------
+  function erfc(x) {
+    if (x !== x) return NaN;
+    if (x < 0) return 2 - erfc(-x);
+    if (x === 0) return 1;
+    if (x < 3) {
+      var x2 = x * x, term = x, sum = x;
+      for (var n = 1; n < 300; n++) { term *= 2 * x2 / (2 * n + 1); sum += term; if (term < 1e-17 * sum) break; }
+      return 1 - 2 / SQRTPI * Math.exp(-x2) * sum;
+    }
+    if (x > 27.3) return 0;
+    var nt = x < 6 ? 80 : 40, t = x;
+    for (var k = nt; k >= 1; k--) t = x + (k / 2) / t;
+    return Math.exp(-x * x) / SQRTPI / t;
+  }
+  function ncdf(x) { return 0.5 * erfc(-x / SQRT2); }
+  function ptail(x) { return ncdf(-x); }
+  function invNcdf(p) {
+    if (p <= 0) return -Infinity;
+    if (p >= 1) return Infinity;
+    var a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+    var b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+    var c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+    var d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+    var q, r, x, pl = 0.02425;
+    if (p < pl) {
+      q = Math.sqrt(-2 * Math.log(p));
+      x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    } else if (p <= 1 - pl) {
+      q = p - 0.5; r = q * q;
+      x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+    } else {
+      q = Math.sqrt(-2 * Math.log(1 - p));
+      x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    for (var i = 0; i < 2; i++) {
+      var e = ncdf(x) - p, u = e * Math.sqrt(2 * Math.PI) * Math.exp(x * x / 2);
+      x = x - u / (1 + x * u / 2);
+    }
+    return x;
+  }
+
+  // ---------- four terms ----------
+  function r7Terms(par, share, end) {
+    return { credit: par.r7credit[end], access: par.r7access[end], capacity: share * par.r7enc[end], frictions: par.r7fric[end] };
+  }
+  function sum4(t) { return t.credit + t.access + t.capacity + t.frictions; }
+  function r7Price(par, share, end) { return sum4(r7Terms(par, share, end)); }
+  function r9Terms(par, share, end, interest) {
+    var lost = par.r9loan[end] + par.bill - (interest ? par.iorb : 0);
+    return { credit: par.r9credit[end], access: par.r9access[end], capacity: share * lost, frictions: par.r9fric[end] };
+  }
+  function r9Price(par, share, end, interest) { return sum4(r9Terms(par, share, end, interest)); }
+  function sunExtra(par, c, share, end) {
+    if (c === "a") return 0;
+    if (c === "b1") return share * par.r7enc[end];
+    return share * (par.r9loan[end] + par.bill - par.iorb);          // b2: reserves in a master account earn IORB
+  }
+  function lin(f) { var a = f(0); return { ic: a, sl: f(1) - a }; }
+  function crossOf(l7, l9) {
+    if (l9.ic <= l7.ic && l9.sl <= l7.sl) return null;                // R9 cheaper at every share
+    return (l7.ic - l9.ic) / (l9.sl - l7.sl);
+  }
+  function passes(lend, bar) { return lend >= bar - 1e-12; }
+
+  function routes(par) {
+    var s = par.share, o = {};
+    var r7lo = r7Price(par, s, 0), r7hi = r7Price(par, s, 1);
+    o.r7 = { lo: r7lo, hi: r7hi, base: 0.5 * (r7lo + r7hi), lend: 1 - s, bills: s / (1 - par.haircut),
+             lendGross: 1 - s / (1 - par.haircut), terms: [r7Terms(par, s, 0), r7Terms(par, s, 1)] };
+    var r9lo = r9Price(par, s, 0, par.interest), r9hi = r9Price(par, s, 1, par.interest);
+    o.r9 = { lo: r9lo, hi: r9hi, base: 0.5 * (r9lo + r9hi), lend: 1 - s,
+             terms: [r9Terms(par, s, 0, par.interest), r9Terms(par, s, 1, par.interest)] };
+    var alo = r9Price(par, s, 0, !par.interest), ahi = r9Price(par, s, 1, !par.interest);
+    o.r9alt = { lo: alo, hi: ahi, base: 0.5 * (alo + ahi) };
+    var r7b = function (sh) { return 0.5 * (r7Price(par, sh, 0) + r7Price(par, sh, 1)); };
+    var r9b = function (sh) { return 0.5 * (r9Price(par, sh, 0, par.interest) + r9Price(par, sh, 1, par.interest)); };
+    var l9 = lin(r9b), l7 = lin(r7b);
+    o.cross = (l7.ic - l9.ic) / ((l9.sl) - (l7.sl));                  // the engine's R9_BE_SHARE formula
+    o.lines = { r7: l7, r9: l9 };
+    o.sun = {};
+    ["a", "b1", "b2"].forEach(function (c) {
+      var lo = r7lo + sunExtra(par, c, s, 0), hi = r7hi + sunExtra(par, c, s, 1);
+      var ex = 0.5 * (sunExtra(par, c, s, 0) + sunExtra(par, c, s, 1));
+      var lc = lin(function (sh) { return 0.5 * (r7Price(par, sh, 0) + sunExtra(par, c, sh, 0) + r7Price(par, sh, 1) + sunExtra(par, c, sh, 1)); });
+      o.sun[c] = { lo: lo, hi: hi, base: 0.5 * (lo + hi), lend: 1 - s * (c === "a" ? 1 : 2), ex_base: ex,
+                   ex_lo: sunExtra(par, c, s, 0), ex_hi: sunExtra(par, c, s, 1), ic: lc.ic, sl: lc.sl, cross: crossOf(lc, l9) };
+    });
+    o.tie = { b1: (o.r9.base - o.r7.base) / o.sun.b1.ex_base, b2: (o.r9.base - o.r7.base) / o.sun.b2.ex_base };
+    // the chosen Sunday cash source, mixed: share m of the Sunday capacity from it, the rest from loans already pledged
+    var c = par.sunCase, m = c === "a" ? 0 : par.sunMix, S = o.sun[c === "a" ? "b1" : c];
+    var mlo = r7lo + m * (c === "a" ? 0 : S.ex_lo), mhi = r7hi + m * (c === "a" ? 0 : S.ex_hi);
+    var ml = { ic: l7.ic, sl: l7.sl + m * (c === "a" ? 0 : S.sl - l7.sl) };
+    o.chosen = { c: c, m: m, lo: mlo, hi: mhi, base: 0.5 * (mlo + mhi), lend: 1 - s - m * s, line: ml, cross: crossOf(ml, l9) };
+    // R8 one ledger
+    var aSmall = Math.min(FIXED.r6Access, par.r7access[0]);
+    var save = function (x) { return x <= 0 ? 0 : x * aSmall + FIXED.r8FricSave; };
+    o.r8 = { lo: FIXED.r6Price + r7lo - save(1), hi: FIXED.r6Price + r7hi - save(0),
+             base: FIXED.r6Price + o.r7.base - save(FIXED.r8AccShare), lend: 1 - FIXED.thetaM - s };
+    return o;
+  }
+
+  // ---------- cap binding, one member ----------
+  function pBind(par, backing) {           // P(peak debit over a 50-hour weekend > backing), median medBal of the balance
+    return ptail(Math.log((backing === undefined ? par.share : backing) / par.medBal) / par.sig);
+  }
+  function backingFor(par, pd) { var mult = Math.exp(par.sig * -invNcdf(pd)); return { mult: mult, back: mult * par.medBal }; }
+  function lognormMinMean(med, sig, c) {
+    var d2 = Math.log(med / c) / sig;
+    return med * Math.exp(sig * sig / 2) * ncdf(-d2 - sig) + c * ncdf(d2);
+  }
+  function psrDailyRate(annual) { return Math.floor(annual / 360 * 1e7 + 1e-9) / 1e7; }
+
+  function binding(par) {
+    var p = pBind(par), o = { p: p, year: 1 - Math.pow(1 - p, WEEKENDS), n: WEEKENDS * p };
+    o.ladder = TARGETS.map(function (t) {
+      var b = backingFor(par, t.p);
+      return { key: t.key, label: t.label, pd: t.p, mult: b.mult, back: b.back, lo: r7Price(par, b.back, 0), hi: r7Price(par, b.back, 1),
+               lend: 1 - b.back, pass: passes(1 - b.back, par.s2) };
+    });
+    var cap = 1 - par.s2;
+    o.med = TARGETS.map(function (t) {
+      var mm = Math.exp(par.sig * -invNcdf(t.p));
+      return { key: t.key, label: t.label, med: cap / mm, medGross: cap * (1 - par.haircut) / mm };
+    });
+    o.s2cap = cap;
+    o.pAtS2cap = ptail(Math.log(cap / par.medBal) / par.sig);
+    o.multAtS2cap = cap / par.medBal;
+    // R9 without a weekend top-up
+    var d2 = Math.log(par.medBal / par.share) / par.sig, pr = ncdf(d2);
+    o.rej = { p: pr, e: par.medBal * Math.exp(par.sig * par.sig / 2) * ncdf(d2 + par.sig) - par.share * pr };
+    // Sunday settlement cash: expected secured debit and the daylight overdraft fee
+    var sd = par.share * lognormMinMean(par.medBal / par.share, par.sig, 1.0);
+    var fee = function (f, h) { return WEEKENDS * sd * psrDailyRate(f) * h / 24; };
+    o.dod = { sun_debit: sd, hours: DOD_H, fee0: fee(0, DOD_H), fee50: fee(50 * BP, DOD_H), fee50_1700: fee(50 * BP, DOD_H_1700) };
+    return o;
+  }
+
+  // ---------- same weekend across members: count distribution by quadrature ----------
+  function linspace(a, b, n) {
+    var out = new Float64Array(n), step = (b - a) / (n - 1);
+    for (var i = 0; i < n; i++) out[i] = a + i * step;
+    out[n - 1] = b;
+    return out;
+  }
+  function gaussWeights(z) {
+    var w = new Float64Array(z.length), s = 0, i;
+    for (i = 0; i < z.length; i++) { w[i] = Math.exp(-z[i] * z[i] / 2); s += w[i]; }
+    for (i = 0; i < z.length; i++) w[i] /= s;
+    return w;
+  }
+  var GRID = { gaussZ: 2001, tZ: 161, tW: 120 };
+  var _gauss = null, _tgrid = null;
+  function gaussGrid() { if (!_gauss) { var z = linspace(-8, 8, GRID.gaussZ); _gauss = { z: z, w: gaussWeights(z) }; } return _gauss; }
+  function tGrid() {
+    if (_tgrid) return _tgrid;
+    var s = linspace(Math.log(1e-4), Math.log(80.0), GRID.tW), W = new Float64Array(GRID.tW), ww = new Float64Array(GRID.tW), tot = 0, i;
+    for (i = 0; i < GRID.tW; i++) { W[i] = Math.exp(s[i]); ww[i] = Math.pow(W[i], NU / 2) * Math.exp(-W[i] / 2); tot += ww[i]; }
+    for (i = 0; i < GRID.tW; i++) ww[i] /= tot;
+    var z = linspace(-8, 8, GRID.tZ);
+    _tgrid = { z: z, wz: gaussWeights(z), W: W, ww: ww, sq: W.map(function (v) { return Math.sqrt(v / NU); }) };
+    return _tgrid;
+  }
+  function binomRow(p, n, out) {
+    for (var j = 0; j <= n; j++) out[j] = 0;
+    if (p <= 0) { out[0] = 1; return [0, 0]; }
+    if (p >= 1) { out[n] = 1; return [n, n]; }
+    var k, v, mx, mean = n * p, r;
+    if (p <= 0.5) {
+      r = p / (1 - p); v = Math.pow(1 - p, n); out[0] = v; mx = v;
+      for (k = 0; k < n; k++) {
+        v = v * (n - k) / (k + 1) * r; out[k + 1] = v;
+        if (v > mx) mx = v;
+        if (k + 1 > mean && v < TRUNC * mx) return [0, k + 1];
+      }
+      return [0, n];
+    }
+    r = (1 - p) / p; v = Math.pow(p, n); out[n] = v; mx = v;
+    for (k = n; k > 0; k--) {
+      v = v * k / (n - k + 1) * r; out[k - 1] = v;
+      if (v > mx) mx = v;
+      if (k - 1 < mean && v < TRUNC * mx) return [k - 1, n];
+    }
+    return [0, n];
+  }
+  function countPmf(pd, rho, M, cop) {
+    var pmf = new Float64Array(M + 1), row = new Float64Array(M + 1), i, j, k, rg;
+    var add = function (w, p) { rg = binomRow(p, M, row); for (k = rg[0]; k <= rg[1]; k++) pmf[k] += w * row[k]; };
+    var sr = Math.sqrt(rho), s1 = Math.sqrt(1 - rho);
+    if (cop === "gauss") {
+      if (rho === 0) { add(1, pd); return pmf; }
+      var G = gaussGrid(), thr = invNcdf(pd);
+      for (i = 0; i < G.z.length; i++) add(G.w[i], ncdf((thr - sr * G.z[i]) / s1));
+      return pmf;
+    }
+    var T = tGrid(), lo = -40.0, hi = 0.0, c;
+    for (var it = 0; it < 80; it++) {
+      c = (lo + hi) / 2;
+      var e = 0;
+      for (j = 0; j < T.W.length; j++) e += T.ww[j] * ncdf(c * T.sq[j]);
+      if (e < pd) lo = c; else hi = c;
+    }
+    c = (lo + hi) / 2;
+    for (i = 0; i < T.z.length; i++) {
+      var srz = sr * T.z[i];
+      for (j = 0; j < T.W.length; j++) add(T.wz[i] * T.ww[j], ncdf((c * T.sq[j] - srz) / s1));
+    }
+    return pmf;
+  }
+  function pAtLeast(pmf, k) { var s = 0; for (var j = k; j < pmf.length; j++) s += pmf[j]; return s; }
+  function quarter(M) { return Math.ceil(M / 4); }
+  var _solveCache = {};
+  function solvePd(target, k, M, rho, cop) {
+    var key = [target, k, M, rho, cop, GRID.gaussZ, GRID.tZ, GRID.tW].join("|");
+    if (_solveCache[key] !== undefined) return _solveCache[key];
+    var lo = Math.log(1e-10), hi = Math.log(0.6);
+    for (var i = 0; i < 36; i++) {
+      var m = 0.5 * (lo + hi);
+      if (pAtLeast(countPmf(Math.exp(m), rho, M, cop), k) < target) lo = m; else hi = m;
+    }
+    return (_solveCache[key] = Math.exp(0.5 * (lo + hi)));
+  }
+  function cohort(par, p) {
+    var M = par.M, pmf = countPmf(p, par.rho, M, par.cop), q = quarter(M), mean = 0;
+    for (var k = 0; k <= M; k++) mean += k * pmf[k];
+    var o = { p1: pAtLeast(pmf, 1), p3: pAtLeast(pmf, 3), pq: pAtLeast(pmf, q), quarter: q, mean: mean, pmf: pmf };
+    o.joint = [];
+    TARGETS.forEach(function (t) {
+      [["one", 1], ["quarter", q]].forEach(function (cr) {
+        var pd = solvePd(t.p, cr[1], M, par.rho, par.cop), b = backingFor(par, pd);
+        o.joint.push({ target: t.key, label: t.label, crit: cr[0], k: cr[1], pd: pd, mult: b.mult, back: b.back,
+                       lo: r7Price(par, b.back, 0), hi: r7Price(par, b.back, 1), lend: 1 - b.back, pass: passes(1 - b.back, par.s2) });
+      });
+    });
+    return o;
+  }
+
+  // ---------- closed-window calendar ----------
+  var HOL = ["2025-12-25",
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-05-25", "2026-06-19", "2026-09-07", "2026-10-12", "2026-11-11", "2026-11-26", "2026-12-25",
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-05-31", "2027-07-05", "2027-09-06", "2027-10-11", "2027-11-11", "2027-11-25"];
+  var DAY = 86400000, HOLSET = {};
+  HOL.forEach(function (s) { var a = s.split("-"); HOLSET[Date.UTC(+a[0], +a[1] - 1, +a[2]) / DAY] = true; });
+  var SCHED = [
+    { key: "current", name: "Today: Monday to Friday, Reserve Bank holidays closed", wd: [0, 1, 2, 3, 4], hol: true },
+    { key: "six", name: "Announced 22x6 (not yet in effect): Sunday to Friday, weekday holidays open", wd: [6, 0, 1, 2, 3, 4], hol: false },
+    { key: "seven", name: "Seven days (hypothetical): every day open", wd: [0, 1, 2, 3, 4, 5, 6], hol: false }];
+  var _winCache = {};
+  function windowCounts(year, sched) {       // { hours: count } of the windows that end in the year
+    var key = year + ":" + sched.key;
+    if (_winCache[key]) return _winCache[key];
+    var d0 = Date.UTC(year - 1, 11, 1) / DAY, d1 = Date.UTC(year, 11, 31) / DAY, ops = [];
+    for (var d = d0; d <= d1; d++) {
+      var wd = (new Date(d * DAY).getUTCDay() + 6) % 7;                   // Monday 0 ... Sunday 6
+      if (sched.wd.indexOf(wd) >= 0 && !(sched.hol && HOLSET[d])) ops.push(d);
+    }
+    var hc = {}, nOps = 0;
+    for (var i = 1; i < ops.length; i++) {
+      if (new Date(ops[i] * DAY).getUTCFullYear() !== year) continue;
+      var h = 24 * (ops[i] - ops[i - 1] - 1) + OPEN_PREV - CLOSE;
+      hc[h] = (hc[h] || 0) + 1;
+    }
+    ops.forEach(function (x) { if (new Date(x * DAY).getUTCFullYear() === year) nOps++; });
+    var hours = Object.keys(hc).map(Number).sort(function (a, b) { return a - b; });
+    return (_winCache[key] = { hc: hc, hours: hours, hmax: hours[hours.length - 1], nOps: nOps });
+  }
+  function gScale(h, sc) { return sc === "linear" ? h / H_REF : Math.sqrt(h / H_REF); }
+  function pWin(par, h, backing, sc) { return ptail(Math.log(backing / (par.medBal * gScale(h, sc))) / par.sig); }
+  function bindsYear(par, W, backing, sc) {
+    var n = 0, lp = 0;
+    W.hours.forEach(function (h) { var p = pWin(par, h, backing, sc); n += W.hc[h] * p; lp += W.hc[h] * Math.log1p(-p); });
+    return [n, 1 - Math.exp(lp)];
+  }
+  function calendar(par) {
+    var routesBinds = WEEKENDS * pBind(par), o = { routes_binds: routesBinds, routes_year: 1 - Math.pow(1 - pBind(par), WEEKENDS) };
+    var s = par.share, sc2 = ["linear", "sqrt"];
+    o.p1 = {}; o.p2 = {}; o.win = {};
+    [2026, 2027].forEach(function (y) {
+      var W = windowCounts(y, SCHED[0]);
+      o.win[y] = W;
+      sc2.forEach(function (sc) {
+        o.p1[y + "_" + sc] = bindsYear(par, W, s, sc);
+        var bk = s * gScale(W.hmax, sc);
+        o.p2[y + "_" + sc] = { back: bk, lo: r7Price(par, bk, 0), hi: r7Price(par, bk, 1), lend: 1 - bk, binds: bindsYear(par, W, bk, sc)[0] };
+      });
+    });
+    o.pwin = {};
+    [2, 26, 50, 74].forEach(function (h) { sc2.forEach(function (sc) { o.pwin[h + "_" + sc] = pWin(par, h, s, sc); }); });
+    o.scen = SCHED.map(function (S) {
+      var W = windowCounts(2026, S), rec = { key: S.key, name: S.name, hcount: W.hc, hours: W.hours, hmax: W.hmax };
+      rec.pwin = {};
+      W.hours.forEach(function (h) { rec.pwin[h] = { linear: pWin(par, h, s, "linear"), sqrt: pWin(par, h, s, "sqrt") }; });
+      rec.binds_p1 = bindsYear(par, W, s, "linear")[0];
+      rec.binds_p1_sqrt = bindsYear(par, W, s, "sqrt")[0];
+      sc2.forEach(function (sc) {
+        var bkMax = s * gScale(W.hmax, sc), lo = 1e-4, hi = 1.0;
+        for (var i = 0; i < 80; i++) { var m = 0.5 * (lo + hi); if (bindsYear(par, W, m, sc)[0] > routesBinds) lo = m; else hi = m; }
+        [["max", bkMax], ["year", 0.5 * (lo + hi)]].forEach(function (tb) {
+          rec[tb[0] + "_" + sc] = { back: tb[1], lo: r7Price(par, tb[1], 0), hi: r7Price(par, tb[1], 1), lend: 1 - tb[1],
+                                    binds: bindsYear(par, W, tb[1], sc)[0], pass: passes(1 - tb[1], par.s2) };
+        });
+      });
+      return rec;
+    });
+    var sv = o.scen[2];
+    o.seven = [];
+    sc2.forEach(function (sc) {
+      var bills = sv["year_" + sc].back;
+      [H_REF, H_SEC_GAP].forEach(function (h) {
+        var res = s * gScale(h, sc);
+        o.seven.push({ sc: sc, h: h, bills: bills, res: res, lend: 1 - bills - res });
+      });
+    });
+    return o;
+  }
+
+  // ---------- by deposit type (results_routes.md Section 10b) ----------
+  function depositTypes(par, R) {
+    var F = FIXED, r6 = F.r6Price, r6lend = 1 - F.thetaM, s = par.share;
+    var row = function (deposit, clocks, hedge, base, lo, hi, lend, basis) { return { deposit: deposit, clocks: clocks, hedge: hedge, base: base, lo: lo, hi: hi, lend: lend, basis: basis }; };
+    var rows = [
+      row("Insured, plain account", "neither", "none needed", 0, 0, 0, 1, "the FDIC insures it"),
+      row("Uninsured, plain account", "run", "R6 mutual with tail, reference design", r6, r6, r6, r6lend, "fixed input (mutual-tail engine)"),
+      row("Uninsured, plain account", "run", "R5 pooled vehicle sized to S5 (strict champion)", F.r5Sized, F.r5Sized, F.r5Sized, F.r5SizedLend, "fixed input (clearing-cost engine)"),
+      row("Insured, tokenized", "settlement", "R7 facility, Sunday cash case (a)", R.r7.base, R.r7.lo, R.r7.hi, R.r7.lend, "live"),
+      row("Insured, tokenized", "settlement", "R9 joint account", R.r9.base, R.r9.lo, R.r9.hi, R.r9.lend, "live"),
+      row("Insured, tokenized", "settlement", "R7 facility, Sunday cash case (b1)", R.sun.b1.base, R.sun.b1.lo, R.sun.b1.hi, R.sun.b1.lend, "live"),
+      row("Insured, tokenized", "settlement", "R7 facility, Sunday cash case (b2)", R.sun.b2.base, R.sun.b2.lo, R.sun.b2.hi, R.sun.b2.lend, "live"),
+      row("Uninsured, tokenized", "both", "R8 one ledger (R6 + R7, Sunday cash case (a))", R.r8.base, R.r8.lo, R.r8.hi, R.r8.lend, "live, R6 fixed"),
+      row("Uninsured, tokenized", "both", "R6 + R9, no shared ledger", r6 + R.r9.base, r6 + R.r9.lo, r6 + R.r9.hi, 1 - F.thetaM - s, "live, R6 fixed"),
+      row("Uninsured, tokenized", "both", "R8 one ledger, Sunday cash case (b1)", R.r8.base + R.sun.b1.ex_base, R.r8.lo + R.sun.b1.ex_lo, R.r8.hi + R.sun.b1.ex_hi, R.r8.lend - s, "live, R6 fixed"),
+      row("Uninsured, tokenized", "both", "R8 one ledger, Sunday cash case (b2)", R.r8.base + R.sun.b2.ex_base, R.r8.lo + R.sun.b2.ex_lo, R.r8.hi + R.sun.b2.ex_hi, R.r8.lend - s, "live, R6 fixed")];
+    var minBase = function (a, b) { return b.base < a.base ? b : a; };      // the first on a tie, as Python's min
+    var both = { a: minBase(rows[7], rows[8]), b1: minBase(rows[9], rows[8]), b2: minBase(rows[10], rows[8]) };
+    var extra = {};
+    Object.keys(both).forEach(function (c) { extra[c] = [both[c].base - r6, r6lend - both[c].lend]; });
+    return { rows: rows, both: both, extra: extra };
+  }
+
+  function compute(par) {
+    var R = routes(par), B = binding(par);
+    return { par: par, routes: R, bind: B, cohort: cohort(par, B.p), cal: calendar(par), dt: depositTypes(par, R) };
+  }
+
+  var BASE = { share: 0.20, haircut: 0.02, medBal: 0.05, sig: 0.8,
+               r7credit: [0.0, 1 * BP], r7access: [2 * BP, 5 * BP], r7enc: [25 * BP, 100 * BP], r7fric: [3 * BP, 8 * BP],
+               r9credit: [0.0, 0.5 * BP], r9access: [2 * BP, 6 * BP], r9loan: [25 * BP, 100 * BP], r9fric: [2 * BP, 6 * BP],
+               iorb: 0.0390, bill: 0.0413, interest: true, s2: 0.90, M: 20, rho: 0.30, cop: "gauss",
+               sunCase: "a", sunMix: 1.0, schedule: "current", scaling: "linear" };
+
+  return { BASE: BASE, FIXED: FIXED, GRID: GRID, TARGETS: TARGETS, SCHED: SCHED, ncdf: ncdf, invNcdf: invNcdf, compute: compute,
+           routes: routes, binding: binding, cohort: cohort, calendar: calendar, depositTypes: depositTypes,
+           countPmf: countPmf, solvePd: solvePd, r7Price: r7Price, r9Price: r9Price, windowCounts: windowCounts };
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var M = SCModel, BP = 1e-4;
+  var NS = "http://www.w3.org/2000/svg";
+
+  // ---------- inputs ----------
+  // scale: displayed value x scale = model value. pair: [low, high] in par[id].
+  var SPEC = [
+    { group: "Facility and weekend outflow" },
+    { id: "share", name: "Always-on share s", hint: "R7 tier and R9 prefunded position, % of the tokenized balance", unit: "%", scale: 0.01, min: 1, max: 60, step: 0.5 },
+    { id: "haircut", name: "R7 haircut on bills", hint: "bills positioned = s / (1 - haircut)", unit: "%", scale: 0.01, min: 0, max: 15, step: 0.5 },
+    { id: "medBal", name: "Median weekend peak net debit", hint: "% of the balance, to all counterparties", unit: "%", scale: 0.01, min: 0.25, max: 15, step: 0.01 },
+    { id: "sig", name: "Dispersion σ", hint: "lognormal sigma of the peak debit", unit: "", scale: 1, min: 0.2, max: 2, step: 0.01 },
+    { group: "R7 facility terms (low to high)" },
+    { id: "r7credit", pair: true, name: "Credit", unit: "bps", scale: BP, min: 0, max: 20, step: 0.1 },
+    { id: "r7access", pair: true, name: "Access", hint: "agent, custodian, legal", unit: "bps", scale: BP, min: 0, max: 30, step: 0.1 },
+    { id: "r7enc", pair: true, name: "Encumbrance spread", hint: "on the bill slice; capacity = s × spread", unit: "bps", scale: BP, min: 0, max: 400, step: 1 },
+    { id: "r7fric", pair: true, name: "Frictions", unit: "bps", scale: BP, min: 0, max: 30, step: 0.1 },
+    { group: "Sunday settlement cash" },
+    { radio: "sunCase", label: "Source of reserves at the Sunday 9:00 p.m. opening", options: [["a", "(a) Reserve Bank credit against loans already pledged"], ["b1", "(b1) securities bought and pledged"], ["b2", "(b2) reserves held"]] },
+    { id: "sunMix", name: "Share of the Sunday capacity from (b1) or (b2)", hint: "the rest from loans already pledged", unit: "%", scale: 0.01, min: 0, max: 100, step: 1 },
+    { group: "R9 joint account" },
+    { id: "iorb", name: "IORB", hint: "interest on reserve balances", unit: "%", scale: 0.01, min: 0, max: 8, step: 0.01 },
+    { id: "bill", name: "3-month bill", hint: "coupon-equivalent", unit: "%", scale: 0.01, min: 0, max: 8, step: 0.01 },
+    { id: "r9loan", pair: true, name: "Loan spread over bills", unit: "bps", scale: BP, min: 0, max: 400, step: 1 },
+    { id: "r9credit", pair: true, name: "Credit", unit: "bps", scale: BP, min: 0, max: 20, step: 0.1 },
+    { id: "r9access", pair: true, name: "Access", hint: "operator participation and membership", unit: "bps", scale: BP, min: 0, max: 30, step: 0.1 },
+    { id: "r9fric", pair: true, name: "Frictions", hint: "top-up and defunding operations", unit: "bps", scale: BP, min: 0, max: 30, step: 0.1 },
+    { check: "interest", label: "Joint-account balance earns IORB", hint: "on: the live instant-payment network's precedent; off: a new joint account without such an order" },
+    { group: "Fedwire schedule" },
+    { radio: "schedule", label: "Closed windows", options: [["current", "Today (50-hour weekend)"], ["six", "Announced 22x6 (26-hour Saturday)"], ["seven", "Seven days"]] },
+    { radio: "scaling", label: "Peak debit scales with window hours", options: [["linear", "Hours / 50"], ["sqrt", "Square root"]] },
+    { group: "Same-weekend cohort" },
+    { id: "M", name: "Members M", hint: "open debtor cohort, equal size", unit: "", scale: 1, min: 2, max: 60, step: 1, int: true },
+    { id: "rho", name: "Latent correlation ρ", unit: "", scale: 1, min: 0, max: 0.9, step: 0.01 },
+    { radio: "cop", label: "Copula", options: [["gauss", "Gaussian"], ["t", "Student-t(5)"]] },
+    { group: "Screen" },
+    { id: "s2", name: "S2 bar", hint: "lendable share at least (rule of record 0.90)", unit: "", scale: 1, min: 0.5, max: 1, step: 0.01 }
+  ];
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  var par = clone(M.BASE);
+  var els = {};
+
+  function roundTo(v, step) {
+    var dec = (String(step).split(".")[1] || "").length;
+    return Number((Math.round(v / step) * step).toFixed(Math.min(dec + 2, 8)));
+  }
+  function dispV(v, spec) { return roundTo(v / spec.scale, spec.step / 100); }
+
+  function makeNum(s, aria) {
+    var num = document.createElement("input"); num.type = "number";
+    num.min = s.min; num.max = s.max; num.step = s.step; num.inputMode = "decimal"; num.setAttribute("aria-label", aria);
+    return num;
+  }
+  function buildControls() {
+    var host = document.getElementById("controls"), fs = null;
+    SPEC.forEach(function (s) {
+      if (s.group) {
+        fs = document.createElement("fieldset");
+        var lg = document.createElement("legend"); lg.textContent = s.group; fs.appendChild(lg);
+        host.appendChild(fs); return;
+      }
+      if (s.radio) {
+        var div = document.createElement("div"); div.className = "radios"; div.setAttribute("role", "radiogroup");
+        div.setAttribute("aria-label", s.label); div.id = "ctl-" + s.radio;
+        var rl = document.createElement("span"); rl.className = "rlab"; rl.textContent = s.label; div.appendChild(rl);
+        s.options.forEach(function (o) {
+          var lab = document.createElement("label"), inp = document.createElement("input");
+          inp.type = "radio"; inp.name = s.radio; inp.value = o[0]; inp.id = s.radio + "-" + o[0];
+          inp.addEventListener("change", function () { if (inp.checked) { par[s.radio] = o[0]; syncDisabled(); schedule(); } });
+          lab.appendChild(inp); lab.appendChild(document.createTextNode(o[1])); div.appendChild(lab);
+          els[s.radio + "-" + o[0]] = inp;
+        });
+        fs.appendChild(div); return;
+      }
+      if (s.check) {
+        var cd = document.createElement("div"); cd.className = "check";
+        var cl = document.createElement("label"), ci = document.createElement("input");
+        ci.type = "checkbox"; ci.id = "in-" + s.check;
+        ci.addEventListener("change", function () { par[s.check] = ci.checked; schedule(); });
+        cl.appendChild(ci); cl.appendChild(document.createTextNode(s.label));
+        var h = document.createElement("span"); h.className = "hint"; h.textContent = s.hint;
+        cd.appendChild(cl); cd.appendChild(h); fs.appendChild(cd); els[s.check] = ci; return;
+      }
+      var wrap = document.createElement("div"); wrap.className = "ctl" + (s.pair ? " pair" : ""); wrap.id = "ctl-" + s.id;
+      var top = document.createElement("div"); top.className = "top";
+      var plain = s.name.replace(/<[^>]+>/g, "");
+      if (s.pair) {
+        var nm = document.createElement("span"); nm.className = "name";
+        nm.innerHTML = s.name + (s.hint ? '<span class="hint">' + s.hint + "</span>" : "");
+        var nw = document.createElement("span"); nw.className = "num";
+        var lo = makeNum(s, plain + ", low end (" + s.unit + ")"), hi = makeNum(s, plain + ", high end (" + s.unit + ")");
+        lo.id = "in-" + s.id + "-lo"; hi.id = "in-" + s.id + "-hi";
+        var to = document.createElement("span"); to.className = "to"; to.textContent = "to"; to.setAttribute("aria-hidden", "true");
+        var un = document.createElement("span"); un.className = "unit"; un.textContent = s.unit; un.setAttribute("aria-hidden", "true");
+        nw.appendChild(lo); nw.appendChild(to); nw.appendChild(hi); nw.appendChild(un);
+        top.appendChild(nm); top.appendChild(nw); wrap.appendChild(top); fs.appendChild(wrap);
+        [lo, hi].forEach(function (inp, end) {
+          var set = function (commit) {
+            var v = parseFloat(inp.value);
+            if (!isFinite(v)) return;
+            if (commit) { v = Math.min(s.max, Math.max(s.min, v)); inp.value = v; } else if (v < s.min || v > s.max) return;
+            par[s.id][end] = v * s.scale; schedule();
+          };
+          inp.addEventListener("input", function () { set(false); });
+          inp.addEventListener("change", function () { set(true); });
+        });
+        els[s.id] = { lo: lo, hi: hi, spec: s };
+        return;
+      }
+      var lab = document.createElement("label"); lab.className = "name"; lab.htmlFor = "in-" + s.id;
+      lab.innerHTML = s.name + (s.hint ? '<span class="hint">' + s.hint + "</span>" : "");
+      var numw = document.createElement("span"); numw.className = "num";
+      var num = makeNum(s, plain + (s.unit ? " (" + s.unit + ")" : "")); num.id = "in-" + s.id; num.removeAttribute("aria-label");
+      var unit = document.createElement("span"); unit.className = "unit"; unit.textContent = s.unit; unit.setAttribute("aria-hidden", "true");
+      numw.appendChild(num); numw.appendChild(unit);
+      top.appendChild(lab); top.appendChild(numw);
+      var rng = document.createElement("input"); rng.type = "range"; rng.id = "rg-" + s.id;
+      rng.min = s.min; rng.max = s.max; rng.step = s.step;
+      rng.setAttribute("aria-label", plain + (s.unit ? " (" + s.unit + ")" : "") + ", slider");
+      wrap.appendChild(top); wrap.appendChild(rng); fs.appendChild(wrap);
+      function setFrom(v, src) {
+        if (!isFinite(v)) return;
+        v = Math.min(s.max, Math.max(s.min, v));
+        if (s.int) v = Math.round(v);
+        par[s.id] = v * s.scale;
+        if (src !== num) num.value = v;
+        if (src !== rng) rng.value = v;
+        schedule();
+      }
+      rng.addEventListener("input", function () { setFrom(parseFloat(rng.value), rng); });
+      num.addEventListener("input", function () { var v = parseFloat(num.value); if (isFinite(v) && v >= s.min && v <= s.max) setFrom(v, num); });
+      num.addEventListener("change", function () { setFrom(parseFloat(num.value), null); });
+      els[s.id] = { num: num, rng: rng, spec: s };
+    });
+  }
+  function syncControls() {
+    SPEC.forEach(function (s) {
+      if (s.id && s.pair) { els[s.id].lo.value = dispV(par[s.id][0], s); els[s.id].hi.value = dispV(par[s.id][1], s); return; }
+      if (s.id) { var v = dispV(par[s.id], s); els[s.id].num.value = v; els[s.id].rng.value = v; return; }
+      if (s.radio) { els[s.radio + "-" + par[s.radio]].checked = true; return; }
+      if (s.check) els[s.check].checked = !!par[s.check];
+    });
+    syncDisabled();
+  }
+  function syncDisabled() { document.getElementById("ctl-sunMix").classList.toggle("dim", par.sunCase === "a"); }
+
+  document.getElementById("reset").addEventListener("click", function () { par = clone(M.BASE); syncControls(); schedule(0); });
+  document.getElementById("preset-10").addEventListener("click", function () { par.share = 0.10; syncControls(); schedule(0); });
+  document.getElementById("preset-156").addEventListener("click", function () { par.medBal = 0.0156; syncControls(); schedule(0); });
+
+  // ---------- formatting ----------
+  function fx(v, d) { return Number(v.toFixed(8)).toFixed(d); }
+  function b1(x) { return fx(x / BP, 1); }
+  function b2(x) { return fx(x / BP, 2); }
+  function rng1(lo, hi) { return b1(lo) + " to " + b1(hi); }
+  function priceTxt(o) { return rng1(o.lo, o.hi) + " (" + b2(o.base) + ")"; }
+  function pc(x, dd) {
+    if (!(x > 0)) return "0%";
+    var v = x * 100;
+    if (dd !== undefined) return fx(v, dd) + "%";
+    if (v < 1e-4) return "below 0.0001%";
+    if (v >= 10) return fx(v, 1) + "%";
+    if (v >= 1) return fx(v, 2) + "%";
+    var d = Math.min(6, 2 - Math.floor(Math.log10(v)));
+    return fx(v, d) + "%";
+  }
+  function f2(x) { return fx(x, 2); }
+  function f3(x) { return fx(x, 3); }
+  function s2txt(lend) { return lend >= par.s2 - 1e-12 ? "pass" : "fail"; }
+  function s2cls(lend) { return lend >= par.s2 - 1e-12 ? "ok" : "no"; }
+  function crossTxt(x) {             // table cell: the crossover share
+    if (x === null) return "none: R9 cheaper at every share";
+    if (x <= 0) return "none: R7 cheaper at every share";
+    if (x >= 1) return "none: R9 cheaper up to 100%";
+    return pc(x, 1);
+  }
+  function crossPhrase(x) {          // sentence: where R9 is cheaper
+    if (x === null) return "R9 is cheaper at every share";
+    if (x <= 0) return "R7 is cheaper at every share";
+    if (x >= 1) return "R9 is cheaper at every share up to 100%";
+    return "R9 is cheaper below a share of " + pc(x, 1);
+  }
+  function caseName(c) { return c === "a" ? "(a)" : c === "b1" ? "(b1)" : "(b2)"; }
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function td(tr, txt, cls) { var c = document.createElement("td"); c.textContent = txt; if (cls) c.className = cls; tr.appendChild(c); return c; }
+  function th(tr, txt, cls) { var c = document.createElement("th"); c.textContent = txt; c.scope = "col"; if (cls) c.className = cls; tr.appendChild(c); return c; }
+  function table(id, head, rows, opts) {
+    var t = document.getElementById(id); t.textContent = "";
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    head.forEach(function (h) { th(hr, h); }); thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody");
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      if (r.cls) tr.className = r.cls;
+      (r.cells || r).forEach(function (c, i) {
+        if (c && typeof c === "object") td(tr, c.t, c.c); else td(tr, c);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+  }
+  function verdict(id, ok, text) {
+    var host = document.getElementById(id); host.textContent = "";
+    var v = document.createElement("div"); v.className = "verdict";
+    var ic = document.createElement("span"); ic.className = "ic " + (ok ? "ok" : "no"); ic.textContent = ok ? "✓" : "✕";
+    v.appendChild(ic); v.appendChild(document.createTextNode(text)); host.appendChild(v);
+  }
+  function legendInto(id, items) {
+    var host = document.getElementById(id); host.textContent = "";
+    items.forEach(function (it) {
+      var s = document.createElement("span"), k = document.createElement("i");
+      k.className = "lk" + (it.dash ? " dash" : ""); k.style.borderTopColor = "var(" + it.color + ")";
+      s.appendChild(k); s.appendChild(document.createTextNode(it.label)); host.appendChild(s);
+    });
+  }
+  function tipShow(tip, host, x, y, head, rows) {
+    tip.textContent = "";
+    var h = document.createElement("div"); h.className = "t-h"; h.textContent = head; tip.appendChild(h);
+    rows.forEach(function (r) {
+      var d = document.createElement("div"); d.className = "t-r";
+      var k = document.createElement("i"); k.className = "lk"; k.style.borderTopColor = "var(" + r.color + ")"; d.appendChild(k);
+      var b = document.createElement("b"); b.textContent = r.value; d.appendChild(b);
+      d.appendChild(document.createTextNode(" " + r.label)); tip.appendChild(d);
+    });
+    tip.style.display = "block";
+    var hw = host.clientWidth, tw = tip.offsetWidth;
+    var left = x + 14; if (left + tw > hw) left = Math.max(0, x - tw - 14);
+    tip.style.left = left + "px"; tip.style.top = Math.max(0, y - 10) + "px";
+  }
+  function box(host, lab, val, note) {
+    var d = document.createElement("div"); d.className = "be";
+    var l = document.createElement("div"); l.className = "lab"; l.textContent = lab;
+    var v = document.createElement("div"); v.className = "val"; v.textContent = val;
+    var n = document.createElement("div"); n.className = "note"; n.textContent = note;
+    d.appendChild(l); d.appendChild(v); d.appendChild(n); host.appendChild(d);
+  }
+
+  // ---------- 1. R7 against R9 ----------
+  function priceCard(res) {
+    var R = res.routes, s = par.share, ch = R.chosen;
+    document.getElementById("price-sub").textContent = "Basis points a year on the whole tokenized balance at a " + pc(s, 1) +
+      " share, low and high ends of each term with the base at the midpoint. R7 is shown with the Sunday cash source chosen in the inputs, case " +
+      caseName(ch.c) + (ch.c === "a" ? "" : " for " + pc(ch.m, 0) + " of the Sunday capacity") + ". Lendable share on the absolute convention.";
+    var t7 = R.r7.terms, t9 = R.r9.terms;
+    var lohi = function (a, b) { return rng1(a, b); };
+    var rows = [
+      ["Credit", lohi(t7[0].credit, t7[1].credit), lohi(t9[0].credit, t9[1].credit)],
+      ["Access", lohi(t7[0].access, t7[1].access), lohi(t9[0].access, t9[1].access)],
+      ["Standing capacity", lohi(t7[0].capacity, t7[1].capacity), lohi(t9[0].capacity, t9[1].capacity)],
+      { cls: "subrow", cells: ["Sunday settlement cash, " + caseName(ch.c), ch.c === "a" ? "0.0 to 0.0" : lohi(ch.lo - R.r7.lo, ch.hi - R.r7.hi), "not needed (prefunded)"] },
+      ["Frictions", lohi(t7[0].frictions, t7[1].frictions), lohi(t9[0].frictions, t9[1].frictions)],
+      { cls: "sum", cells: ["Price, low to high (base)", priceTxt(ch), priceTxt(R.r9)] },
+      { cls: "subrow", cells: ["Memo: R7 at case (a); R9 with the other interest setting", priceTxt(R.r7), priceTxt(R.r9alt)] },
+      ["Lendable share", f3(ch.lend), f3(R.r9.lend)],
+      ["S2 at " + f2(par.s2), { t: s2txt(ch.lend), c: s2cls(ch.lend) }, { t: s2txt(R.r9.lend), c: s2cls(R.r9.lend) }],
+      { cls: "subrow", cells: ["Memo: bills positioned; lendable counting them", pc(R.r7.bills, 2) + "; " + f3(R.r7.lendGross), "reserves " + pc(s, 1) + " in the joint account"] }
+    ];
+    table("price-table", ["bps a year", "R7 facility", "R9 joint account (" + (par.interest ? "earns IORB" : "earns nothing") + ")"], rows);
+    var cheaper = ch.base <= R.r9.base ? "R7" : "R9", maxS = 1 - par.s2;
+    var okR7 = passes(ch.lend), okR9 = passes(R.r9.lend);
+    verdict("price-verdict", okR7 && okR9,
+      "S2 at " + f2(par.s2) + ": R7 " + (okR7 ? "passes" : "fails") + " (lendable " + f3(ch.lend) + "), R9 " + (okR9 ? "passes" : "fails") + " (" + f3(R.r9.lend) + "). " +
+      cheaper + " is cheaper at this share (" + b2(Math.min(ch.base, R.r9.base)) + " against " + b2(Math.max(ch.base, R.r9.base)) + " bps). " +
+      crossPhrase(ch.cross) + " against R7 with this Sunday cash source" + (ch.c === "a" ? "" : " (crossover at case (a): " + crossTxt(R.cross) + ")") + ". " +
+      "The largest share that passes S2 at a bar of " + f2(par.s2) + " is " + pc(maxS, 1) + (ch.c === "a" ? "" : " for R9, and " + pc(maxS / (1 + ch.m), 1) + " for R7 with this Sunday cash source") + ".");
+    drawShare(res);
+  }
+  function passes(lend) { return lend >= par.s2 - 1e-12; }
+
+  function drawShare(res) {
+    var host = document.getElementById("share-chart"); host.textContent = "";
+    var R = res.routes, L7 = R.chosen.line, L9 = R.lines.r9, LA = R.lines.r7;
+    var lines = [{ key: "r7", label: "R7 facility, Sunday cash " + caseName(R.chosen.c) + (R.chosen.c === "a" ? "" : " at " + pc(R.chosen.m, 0)), color: "--s1", l: L7 },
+                 { key: "r9", label: "R9 joint account", color: "--s2", l: L9 }];
+    if (R.chosen.c !== "a" && R.chosen.m > 0) lines.push({ key: "r7a", label: "R7, case (a)", color: "--s1", l: LA, dash: true });
+    legendInto("share-legend", lines);
+    var xMax = 0.5, W = Math.max(280, host.clientWidth), H = W < 520 ? 230 : 270, mL = 46, mR = 14, mT = 14, mB = 38;
+    var f = function (l, x) { return (l.ic + l.sl * x) / BP; };
+    var yMax = 0;
+    lines.forEach(function (ln) { yMax = Math.max(yMax, f(ln.l, 0), f(ln.l, xMax)); });
+    var p = Math.pow(10, Math.floor(Math.log10(yMax * 1.05))), n = yMax * 1.05 / p;
+    var mm = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].filter(function (v) { return v >= n; })[0], ym = mm * p;
+    var nt = { 1: 5, 1.2: 6, 1.5: 5, 2: 4, 2.5: 5, 3: 6, 4: 4, 5: 5, 6: 6, 8: 4, 10: 5 }[mm];
+    var iw = W - mL - mR, ih = H - mT - mB;
+    var sx = function (x) { return mL + x / xMax * iw; }, sy = function (v) { return mT + ih - Math.max(0, v) / ym * ih; };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img",
+      "aria-label": "Line chart: base price in bps a year against the share from 0 to 50 percent for R7 and R9, with the current share, the crossover and the largest share that passes S2 marked." });
+    for (var t = 0; t <= nt; t++) {
+      var tv = ym * t / nt, yy = sy(tv);
+      svg.appendChild(el("line", { x1: mL, x2: mL + iw, y1: yy, y2: yy, stroke: cssVar("--grid"), "stroke-width": 1 }));
+      svg.appendChild(el("text", { x: mL - 6, y: yy + 4, "text-anchor": "end", "font-size": 11, fill: cssVar("--axis-text") }, String(+tv.toFixed(1))));
+    }
+    for (var xv = 0; xv <= xMax + 1e-9; xv += 0.1) {
+      var xx = sx(xv);
+      svg.appendChild(el("line", { x1: xx, x2: xx, y1: mT + ih, y2: mT + ih + 4, stroke: cssVar("--axis"), "stroke-width": 1 }));
+      svg.appendChild(el("text", { x: xx, y: mT + ih + 17, "text-anchor": "middle", "font-size": 11, fill: cssVar("--axis-text") }, Math.round(xv * 100) + "%"));
+    }
+    svg.appendChild(el("line", { x1: mL, x2: mL + iw, y1: mT + ih, y2: mT + ih, stroke: cssVar("--axis"), "stroke-width": 1 }));
+    svg.appendChild(el("text", { x: mL + iw / 2, y: H - 4, "text-anchor": "middle", "font-size": 11.5, fill: cssVar("--ink-2") }, W < 460 ? "Share of the tokenized balance" : "Share of the tokenized balance (always-on or prefunded)"));
+    // S2 boundary (R9 and R7 case a)
+    var s2x = 1 - par.s2;
+    if (s2x <= xMax) {
+      var bx = sx(s2x);
+      svg.appendChild(el("rect", { x: mL, y: mT, width: bx - mL, height: ih, fill: cssVar("--surface-2") }));
+      svg.appendChild(el("text", { x: mL + 4, y: mT + 12, "font-size": 11, fill: cssVar("--ink-2") }, "S2 passes"));
+    }
+    var cur = sx(Math.min(par.share, xMax));
+    svg.appendChild(el("line", { x1: cur, x2: cur, y1: mT, y2: mT + ih, stroke: cssVar("--ink-2"), "stroke-width": 1 }));
+    var lr = cur < mL + iw * 0.7;
+    svg.appendChild(el("text", { x: cur + (lr ? 5 : -5), y: mT + 26, "text-anchor": lr ? "start" : "end", "font-size": 11, fill: cssVar("--ink-2") }, "Current share " + pc(par.share, 1)));
+    lines.forEach(function (ln) {
+      svg.appendChild(el("line", { x1: sx(0), y1: sy(f(ln.l, 0)), x2: sx(xMax), y2: sy(f(ln.l, xMax)), stroke: cssVar(ln.color), "stroke-width": 2,
+        "stroke-dasharray": ln.dash ? "5 4" : "none", "stroke-linecap": "round" }));
+    });
+    var cx = R.chosen.cross;
+    if (cx !== null && cx > 0 && cx < xMax) {
+      svg.appendChild(el("circle", { cx: sx(cx), cy: sy(f(L9, cx)), r: 4.5, fill: cssVar("--ink"), stroke: cssVar("--surface"), "stroke-width": 2 }));
+    }
+    lines.slice(0, 2).forEach(function (ln) {
+      if (par.share <= xMax) svg.appendChild(el("circle", { cx: cur, cy: sy(f(ln.l, par.share)), r: 4, fill: cssVar(ln.color), stroke: cssVar("--surface"), "stroke-width": 2 }));
+    });
+    var cross = el("line", { y1: mT, y2: mT + ih, stroke: cssVar("--axis-text"), "stroke-width": 1, visibility: "hidden" });
+    svg.appendChild(cross);
+    var hit = el("rect", { x: mL, y: mT, width: iw, height: ih, fill: "transparent" });
+    svg.appendChild(hit);
+    host.appendChild(svg);
+    var tip = document.createElement("div"); tip.className = "tip"; host.appendChild(tip);
+    hit.addEventListener("pointermove", function (ev) {
+      var r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width;
+      var sh = Math.max(0, Math.min(xMax, Math.round((x - mL) / iw * xMax * 200) / 200)), px = sx(sh);
+      cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("visibility", "visible");
+      tipShow(tip, host, px * r.width / W, mT * r.height / H + 20, "Share " + pc(sh, 1) + ", lendable R9 " + f3(1 - sh),
+        lines.map(function (ln) { return { value: fx(f(ln.l, sh), 2) + " bps", label: ln.label, color: ln.color }; }));
+    });
+    hit.addEventListener("pointerleave", function () { tip.style.display = "none"; cross.setAttribute("visibility", "hidden"); });
+    document.getElementById("share-note").textContent = "Dot: the crossover of R9 with R7 at the chosen Sunday cash source (" + crossTxt(cx) +
+      "). Shaded: shares that pass S2 for R9 and for R7 at case (a). Hover for values.";
+  }
+
+  // ---------- 2. Sunday cash ----------
+  function sunCard(res) {
+    var R = res.routes, ch = R.chosen, rows = [];
+    ["a", "b1", "b2"].forEach(function (c) {
+      var o = R.sun[c];
+      rows.push({ cls: c === ch.c && (c === "a" || ch.m === 1) ? "sel" : "", cells: [
+        { a: "(a) Reserve Bank credit against loans already pledged (published)", b1: "(b1) Securities bought and pledged, at R7's encumbrance spread", b2: "(b2) Reserves held for the Sunday opening, R9's reserve convention" }[c],
+        rng1(o.ex_lo, o.ex_hi), priceTxt(o), f2(o.lend), { t: s2txt(o.lend), c: s2cls(o.lend) }, crossTxt(o.cross)] });
+    });
+    if (ch.c !== "a" && ch.m < 1) {
+      rows.push({ cls: "sel", cells: ["Chosen: " + pc(ch.m, 0) + " from " + caseName(ch.c) + ", the rest from loans already pledged",
+        rng1(ch.lo - R.r7.lo, ch.hi - R.r7.hi), priceTxt(ch), f3(ch.lend), { t: s2txt(ch.lend), c: s2cls(ch.lend) }, crossTxt(ch.cross)] });
+    }
+    table("sun-table", ["Sunday cash source", "Extra term, bps", "R7 price (base)", "Lendable share", "S2", "Crossover share with R9"], rows);
+    var host = document.getElementById("sun-ties"); host.textContent = "";
+    var p = document.createElement("p"); p.className = "sub"; p.style.margin = "8px 0 0";
+    var tieTxt = function (x) { return x <= 0 ? "never (R7 at case (a) is already dearer)" : x > 1 ? "above 100% (R9 stays dearer)" : pc(x, 1); };
+    p.textContent = "At the " + pc(par.share, 1) + " share, R9's base (" + b2(R.r9.base) + ") equals R7's when " + tieTxt(R.tie.b2) +
+      " of the Sunday capacity comes from new reserves (b2) or " + tieTxt(R.tie.b1) + " from bought securities (b1), the rest from loans already pledged.";
+    host.appendChild(p);
+    var D = res.bind.dod;
+    table("dod-table", ["Daylight overdraft fee, bps a year", "Expected secured debit settled each Sunday", "Overdraft hours", "Expected fee, bps a year on the balance"], [
+      ["0 (collateralized, the policy's fee)", pc(D.sun_debit, 3), String(D.hours), fx(D.fee0 / BP, 4)],
+      ["50 (uncollateralized, sensitivity)", pc(D.sun_debit, 3), String(D.hours), fx(D.fee50 / BP, 4)],
+      { cls: "subrow", cells: ["50, repaid only at Monday 17:00", pc(D.sun_debit, 3), "20", fx(D.fee50_1700 / BP, 4)] }]);
+  }
+
+  // ---------- 3. binding ----------
+  function bindCard(res) {
+    var B = res.bind, s = par.share;
+    document.getElementById("bind-sub").textContent = "One member, a normal 50-hour weekend. The weekend peak net debit (to all counterparties, members and non-members) is lognormal with a median of " +
+      pc(par.medBal, 2) + " of the balance, " + pc(par.medBal / s, 1) + " of a " + pc(s, 1) + " tier, and σ " + f2(par.sig) + "; the cap binds when the peak exceeds the tier, a cap multiple of " + fx(s / par.medBal, 2) + ".";
+    var host = document.getElementById("bind-out"); host.textContent = "";
+    box(host, "Cap binds, per weekend", pc(B.p), "1 weekend in " + (B.p > 0 ? fx(1 / B.p, 1) : "never"));
+    box(host, "At least once a year", pc(B.year), "52 independent weekends");
+    box(host, "Expected binds a year", f2(B.n), "routes engine's convention, normal weekends only");
+    var rows = B.ladder.map(function (r) {
+      return [r.label, pc(r.pd), fx(r.mult, 2), pc(r.back, 1), rng1(r.lo, r.hi), f3(r.lend), { t: s2txt(r.lend), c: s2cls(r.lend) }];
+    });
+    rows.unshift({ cls: "sel", cells: ["Current share (" + pc(s, 1) + ")", pc(B.p), fx(s / par.medBal, 2), pc(s, 1), rng1(res.routes.r7.lo, res.routes.r7.hi), f3(1 - s), { t: s2txt(1 - s), c: s2cls(1 - s) }] });
+    rows.push({ cls: "subrow", cells: ["Largest backing S2 allows", pc(B.pAtS2cap), fx(B.multAtS2cap, 2), pc(B.s2cap, 1), rng1(M.r7Price(par, B.s2cap, 0), M.r7Price(par, B.s2cap, 1)), f3(1 - B.s2cap), { t: "pass", c: "ok" }] });
+    table("ladder-table", ["Target (per member)", "P(bind) per weekend", "Cap multiple", "Backing (share)", "Price, case (a)", "Lendable share", "S2"], rows);
+    var mrows = B.med.map(function (r) {
+      var ok = r.med >= par.medBal - 1e-15;
+      return [r.label, pc(r.med, 2), pc(r.medGross, 2), { t: ok ? "pass" : "fail", c: ok ? "ok" : "no" }];
+    });
+    table("med-table", ["Per-member target", "Largest median peak debit, cap " + pc(B.s2cap, 0), "Counting grossed-up bills (cap × " + f2(1 - par.haircut) + ")", "Test at the median " + pc(par.medBal, 2)], mrows);
+    var m1 = B.med[0];
+    verdict("med-verdict", m1.med >= par.medBal - 1e-15,
+      "At σ " + f2(par.sig) + " and an S2 bar of " + f2(par.s2) + ", the facility passes S2 and binds in at most 1% of weekends together only if the median weekend peak net debit is at most " +
+      pc(m1.med, 2) + " of the balance (" + pc(m1.medGross, 2) + " counting the grossed-up bills); the input is " + pc(par.medBal, 2) +
+      ". At the largest backing S2 allows, " + pc(B.s2cap, 0) + ", a member's cap binds in " + pc(B.pAtS2cap) + " of weekends.");
+    table("rej-table", ["Prefunded share", "P(a payment is rejected) per weekend", "Expected rejected amount, share of the balance", "Rejected share of the median peak debit"], [
+      [pc(s, 1), pc(B.rej.p), pc(B.rej.e, 3), pc(B.rej.e / par.medBal, 2)]]);
+  }
+
+  // ---------- 4. cohort ----------
+  var MC_PUB = [
+    ["Gaussian", "0.00", "1.894%", "14.98%", "36.37%"], ["Gaussian", "0.15", "1.902%", "18.67%", "47.90%"],
+    ["Gaussian", "0.30", "1.902%", "23.72%", "74.78%"], ["Gaussian", "0.50", "1.900%", "31.38%", "128.97%"],
+    ["Student-t(5)", "0.00", "1.884%", "25.13%", "106.80%"], ["Student-t(5)", "0.15", "1.888%", "28.82%", "142.70%"],
+    ["Student-t(5)", "0.30", "1.892%", "32.41%", "179.29%"], ["Student-t(5)", "0.50", "1.896%", "38.03%", "225.75%"]];
+  function cohortCard(res) {
+    var C = res.cohort, cop = par.cop === "gauss" ? "Gaussian" : "Student-t(5)";
+    document.getElementById("coh-sub").textContent = "An open debtor cohort of " + par.M + " equal members, each drawn as a net debtor with its receivers outside the modelled set (not a closed membership, in which net positions would sum to zero). " +
+      cop + " factor, ρ " + f2(par.rho) + ". Each member keeps its own bind rate, " + pc(res.bind.p) + ", whatever the copula; dependence changes how binds arrive together. Computed live by quadrature over the factor.";
+    table("coh-table", ["Per-member P(bind)", "P(at least 1 binds)", "P(at least 3)", "P(at least a quarter, " + C.quarter + " of " + par.M + ")", "Expected number binding"], [
+      [pc(res.bind.p), pc(C.p1), pc(C.p3), pc(C.pq), f3(C.mean)]]);
+    var rows = C.joint.map(function (r) {
+      return [r.label, r.crit === "one" ? "at least 1 of " + par.M : "at least a quarter (" + r.k + " of " + par.M + ")", pc(r.pd), fx(r.mult, 2), pc(r.back, 1), rng1(r.lo, r.hi), f3(r.lend), { t: s2txt(r.lend), c: s2cls(r.lend) }];
+    });
+    table("joint-table", ["Target", "Criterion", "Per-member P(bind) needed", "Cap multiple", "Backing", "Price, case (a)", "Lendable share", "S2"], rows);
+    table("mc-table", ["Copula", "ρ", "Queued, mean", "Queued, 99th pct weekend", "Queued, 99th pct over a year"], MC_PUB);
+  }
+
+  // ---------- 5. calendar ----------
+  var WTYPE = { 2: "Weekday evening gap", 26: "Midweek holiday or Saturday", 50: "Normal weekend", 74: "Three-day weekend" };
+  function hcTxt(hc) { return Object.keys(hc).map(Number).sort(function (a, b) { return a - b; }).map(function (h) { return hc[h] + " of " + h + " h"; }).join("; "); }
+  function calCard(res) {
+    var K = res.cal, sc = par.scaling, scN = sc === "linear" ? "hours / 50" : "square root of hours / 50";
+    var S = K.scen.filter(function (x) { return x.key === par.schedule; })[0];
+    document.getElementById("cal-sub").textContent = "Closed windows of the Fedwire Funds Service in 2026 under " + { current: "today's schedule", six: "the announced 22x6 schedule", seven: "a seven-day schedule (hypothetical)" }[S.key] + ", on nominal Eastern schedule hours (opens 21:00 the calendar day before each business day, closes 19:00). Peak debit median scales with " + scN + "; backing " + pc(par.share, 1) + ".";
+    var hours = S.hours, rows = hours.map(function (h) {
+      var p = S.pwin[h][sc];
+      return [WTYPE[h] || ("Window of " + h + " h"), String(h), String(S.hcount[h]), pc(p), fx(p / K.pwin["50_" + sc], 2)];
+    });
+    table("win-table", ["Window type (2026, chosen schedule)", "Hours", "Count", "P(bind) at the current backing", "Relative to a normal weekend"], rows);
+    var srows = [];
+    K.scen.forEach(function (x) {
+      var cls = x.key === par.schedule ? "sel" : "";
+      var mx = x["max_" + sc], yr = x["year_" + sc];
+      srows.push({ cls: cls, cells: [x.name, hcTxt(x.hcount), "longest window (" + x.hmax + " h)", pc(mx.back, 1), rng1(mx.lo, mx.hi), f3(mx.lend), { t: s2txt(mx.lend), c: s2cls(mx.lend) }, f2(mx.binds), f2(sc === "linear" ? x.binds_p1 : x.binds_p1_sqrt)] });
+      srows.push({ cls: cls, cells: ["", "", f2(K.routes_binds) + " binds a year", pc(yr.back, 1), rng1(yr.lo, yr.hi), f3(yr.lend), { t: s2txt(yr.lend), c: s2cls(yr.lend) }, f2(yr.binds), ""] });
+    });
+    table("scen-table", ["Schedule", "Closed windows", "Sized to", "Backing (" + (sc === "linear" ? "linear" : "square root") + ")", "Price, case (a)", "Lendable", "S2", "Binds a year at that backing", "Binds a year at the current backing"], srows);
+    var six = K.scen[1]["max_" + sc];
+    verdict("scen-verdict", passes(S["max_" + sc].lend),
+      "Sized so its longest window binds no more often than a normal weekend does today (" + pc(res.bind.p) + "), the " + (S.key === "current" ? "current" : S.key === "six" ? "announced 22x6" : "seven-day") +
+      " schedule needs a backing of " + pc(S["max_" + sc].back, 1) + ", lendable " + f3(S["max_" + sc].lend) + ": " + (passes(S["max_" + sc].lend) ? "it passes" : "it misses") + " S2 at " + f2(par.s2) +
+      " by " + f3(Math.abs(S["max_" + sc].lend - par.s2)) + "." + (S.key === "six" ? "" : " Under 22x6 the backing would be " + pc(six.back, 1) + " (lendable " + f3(six.lend) + ").") +
+      (S.key === "seven" ? " The seven-day pass is conditional on the weekend cash source (table below)." : ""));
+    var prow = [];
+    [2026, 2027].forEach(function (y) {
+      var p1 = K.p1[y + "_" + sc], p2 = K.p2[y + "_" + sc];
+      prow.push([String(y), "P1: backing held at the share", pc(par.share, 1), rng1(res.routes.r7.lo, res.routes.r7.hi), f3(1 - par.share), { t: s2txt(1 - par.share), c: s2cls(1 - par.share) }, f2(p1[0]), pc(p1[1], 1)]);
+      prow.push([String(y), "P2: longest window (" + K.win[y].hmax + " h) binds as a normal weekend under P1", pc(p2.back, 1), rng1(p2.lo, p2.hi), f3(p2.lend), { t: s2txt(p2.lend), c: s2cls(p2.lend) }, f2(p2.binds), ""]);
+    });
+    prow.push({ cls: "subrow", cells: ["Routes engine", "52 independent normal weekends", pc(par.share, 1), "", "", "", f2(K.routes_binds), pc(K.routes_year, 1)] });
+    table("pol-table", ["Year", "Policy (today's schedule, " + (sc === "linear" ? "linear" : "square root") + ")", "Backing", "Price, case (a)", "Lendable", "S2", "Expected binds a year", "P(at least one bind)"], prow);
+    var sv = K.seven.filter(function (r) { return r.sc === sc; }), b7 = sv[0].bills;
+    var r7rows = [["Weekend Reserve Bank credit (no reserves held)", pc(b7, 1), "0", f3(1 - b7), { t: s2txt(1 - b7), c: s2cls(1 - b7) }]];
+    sv.forEach(function (r) {
+      r7rows.push(["Reserves held, sized over " + (r.h === 50 ? "the normal-weekend window, 50 h" : "Friday 15:15 to Monday 8:30, 65.25 h"), pc(r.bills, 1), pc(r.res, 1), f3(r.lend), { t: s2txt(r.lend), c: s2cls(r.lend) }]);
+    });
+    table("seven-table", ["Seven days, sized to " + f2(K.routes_binds) + " binds a year: weekend cash source", "Bills backing the facility", "Reserves held", "Lendable share", "S2"], r7rows);
+  }
+
+  // ---------- 6. deposit type ----------
+  function dtCard(res) {
+    var D = res.dt;
+    var rows = D.rows.map(function (r) {
+      var fixed = r.basis.indexOf("fixed input") === 0;
+      return [r.deposit, r.clocks, r.hedge, r.base === 0 ? "0" : (r.lo === r.hi ? b2(r.base) : priceTxt(r)), f2(r.lend), r.basis];
+    });
+    table("dt-table", ["Deposit", "Clock(s)", "Route on the list", "Price, bps (base)", "Lendable share", "Basis"], rows);
+    var brows = ["a", "b1", "b2"].map(function (c) {
+      var r = D.both[c], e = D.extra[c];
+      return [caseName(c), r.hedge, b2(r.base), f2(r.lend), b2(e[0]), f2(e[1])];
+    });
+    table("both-table", ["Sunday settlement cash", "Cheapest route for both clocks", "Price (base)", "Lendable share", "Added by the settlement clock over R6, bps", "Lendable share lost to it"], brows);
+    document.getElementById("dt-note").textContent = "R6 (" + b2(M.FIXED.r6Price) + " bps, lendable " + f2(1 - M.FIXED.thetaM) + ") and R5 sized (" + b2(M.FIXED.r5Sized) +
+      ") are fixed inputs from the mutual-tail and clearing-cost engines and do not move with this page; every other row recomputes. Source of the layout: results_routes.md, Section 10b.";
+  }
+
+  // ---------- KPIs ----------
+  function kpis(res) {
+    var R = res.routes, ch = R.chosen;
+    document.getElementById("kpi-r7").innerHTML = b2(ch.base) + "<small>bps</small>";
+    document.getElementById("kpi-r7-lab").textContent = "R7 facility, base price, Sunday cash " + caseName(ch.c);
+    document.getElementById("kpi-r7-note").textContent = rng1(ch.lo, ch.hi) + " bps a year; " + crossPhrase(ch.cross);
+    document.getElementById("kpi-r9").innerHTML = b2(R.r9.base) + "<small>bps</small>";
+    document.getElementById("kpi-r9-note").textContent = rng1(R.r9.lo, R.r9.hi) + " bps a year; " + (par.interest ? "balance earns IORB" : "balance earns nothing");
+    var k = document.getElementById("kpi-lend");
+    k.innerHTML = f2(ch.lend) + ' <small class="' + s2cls(ch.lend) + '">S2 ' + s2txt(ch.lend) + "</small>";
+    document.getElementById("kpi-lend-note").textContent = "bar " + f2(par.s2) + "; R9 " + f2(R.r9.lend);
+    document.getElementById("kpi-bind").textContent = pc(res.bind.p);
+    document.getElementById("kpi-bind-note").textContent = pc(res.bind.year, 1) + " at least once a year; 1% needs " + pc(res.bind.ladder[0].back, 1) + " backing";
+  }
+
+  // ---------- update loop ----------
+  var last = null, timer = null;
+  function update() {
+    var t0 = performance.now();
+    last = M.compute(clone(par));
+    var t1 = performance.now();
+    render();
+    var t2 = performance.now();
+    document.getElementById("perf").textContent = "Last update: model " + Math.round(t1 - t0) + " ms, drawing " + Math.round(t2 - t1) + " ms.";
+  }
+  function render() {
+    if (!last) return;
+    kpis(last); priceCard(last); sunCard(last); bindCard(last); cohortCard(last); calCard(last); dtCard(last);
+  }
+  function schedule(ms) { clearTimeout(timer); timer = setTimeout(update, ms === undefined ? 90 : ms); }
+
+  buildControls(); syncControls(); update();
+  var rw = null;
+  window.addEventListener("resize", function () { clearTimeout(rw); rw = setTimeout(render, 120); });
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var onScheme = function () { render(); };
+    if (mq.addEventListener) mq.addEventListener("change", onScheme); else if (mq.addListener) mq.addListener(onScheme);
+  }
+})();
+</script>
+</body>
+</html>
